@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infinity Word Search</title>
+  <link rel="stylesheet" href="static/styles.css">
+  <style>
+    
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Infinity Word Search</h1>
+  </header>
+  <main class="app-shell">
+    <section class="gameplay" aria-labelledby="gameplay-title">
+      <div class="controls">
+        <div>
+          <p id="gameplay-title" style="margin: 0; font-size: 1rem; font-weight: 700;">Gameplay</p>
+          <p style="margin: 4px 0 0; color: #475569; font-size: 0.92rem;">Use the mouse wheel to zoom around the cursor. Click and drag to pan the grid.</p>
+        </div>
+      </div>
+      <div class="grid-wrapper" id="grid-scroll-area">
+        <div class="grid-container" id="wordsearch-grid" data-scale="1">
+          <!-- Placeholder grid cells -->
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+          <button class="grid-cell">A</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="word-bank" aria-labelledby="word-bank-title">
+      <h2 id="word-bank-title">Word Bank</h2>
+      <p style="color:#475569; margin-top:0; margin-bottom:16px;">Find the words listed below in the grid.</p>
+      <ul class="word-list" id="word-list">
+        <li>INFINITY</li>
+        <li>SEARCH</li>
+        <li>PUZZLE</li>
+        <li>GRID</li>
+        <li>WORD</li>
+        <li>FUN</li>
+      </ul>
+    </aside>
+  </main>
+
+  <script>
+    const gridWrapper = document.getElementById('grid-scroll-area');
+    const gridContainer = document.getElementById('wordsearch-grid');
+
+    gridContainer.style.transformOrigin = '0 0';
+    gridWrapper.style.cursor = 'grab';
+    gridWrapper.style.overflow = 'auto';
+
+    let scale = 1;
+    const minScale = 0.8;
+    const maxScale = 2;
+    const zoomStep = 0.1;
+
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let startScrollLeft = 0;
+    let startScrollTop = 0;
+
+    function updateZoom(newScale, pointerX, pointerY) {
+      const prevScale = scale;
+      if (newScale === prevScale) {
+        return;
+      }
+
+      const contentX = (gridWrapper.scrollLeft + pointerX) / prevScale;
+      const contentY = (gridWrapper.scrollTop + pointerY) / prevScale;
+
+      scale = newScale;
+      gridContainer.style.transform = `scale(${scale})`;
+      gridContainer.dataset.scale = scale;
+
+      gridWrapper.scrollLeft = contentX * scale - pointerX;
+      gridWrapper.scrollTop = contentY * scale - pointerY;
+    }
+
+    gridWrapper.addEventListener('wheel', (event) => {
+      event.preventDefault();
+
+      const rect = gridContainer.getBoundingClientRect();
+      const pointerX = event.clientX - rect.left;
+      const pointerY = event.clientY - rect.top;
+
+      const nextScale = event.deltaY < 0
+        ? Math.min(maxScale, scale + zoomStep)
+        : Math.max(minScale, scale - zoomStep);
+
+      updateZoom(nextScale, pointerX, pointerY);
+    }, { passive: false });
+
+    gridWrapper.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      isDragging = true;
+      dragStartX = event.clientX;
+      dragStartY = event.clientY;
+      startScrollLeft = gridWrapper.scrollLeft;
+      startScrollTop = gridWrapper.scrollTop;
+      gridWrapper.setPointerCapture(event.pointerId);
+      gridWrapper.style.cursor = 'grabbing';
+    });
+
+    gridWrapper.addEventListener('pointermove', (event) => {
+      if (!isDragging) {
+        return;
+      }
+
+      const deltaX = event.clientX - dragStartX;
+      const deltaY = event.clientY - dragStartY;
+
+      gridWrapper.scrollLeft = startScrollLeft - deltaX;
+      gridWrapper.scrollTop = startScrollTop - deltaY;
+    });
+
+    gridWrapper.addEventListener('pointerup', (event) => {
+      if (!isDragging) {
+        return;
+      }
+
+      isDragging = false;
+      gridWrapper.releasePointerCapture(event.pointerId);
+      gridWrapper.style.cursor = 'grab';
+    });
+
+    gridWrapper.addEventListener('pointercancel', () => {
+      if (!isDragging) {
+        return;
+      }
+
+      isDragging = false;
+      gridWrapper.style.cursor = 'grab';
+    });
+
+    // Placeholder for future game logic
+    const gridData = {
+      rows: 12,
+      columns: 12,
+      words: ['INFINITY', 'SEARCH', 'PUZZLE', 'GRID', 'WORD', 'FUN']
+    };
+
+    function initializeGame() {
+      // Future logic: populate grid, place words, attach event handlers
+      console.log('Word search structure ready', gridData);
+    }
+
+    initializeGame();
+  </script>
+</body>
+</html>

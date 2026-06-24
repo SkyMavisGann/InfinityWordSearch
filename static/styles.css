@@ -1,0 +1,139 @@
+:root {
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #fdc5fe;
+      box-sizing: border-box;
+    }
+
+    * {
+      box-sizing: inherit;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #fdc5fe;
+      color: rgb(112, 148, 136);
+      padding: 24px 28px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: 1px;
+    }
+
+    .app-shell {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.8fr 1fr;
+      gap: 20px;
+      padding: 24px;
+      align-items: start;
+    }
+
+    .gameplay,
+    .word-bank {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .gameplay {
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      gap: 16px;
+    }
+
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+    }
+
+    .grid-wrapper {
+      position: relative;
+      overflow: auto;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      background: #ffffff;
+      flex: 1;
+      min-height: 360px;
+      padding: 12px;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(12, 40px);
+      grid-template-rows: repeat(12, 40px);
+      gap: 0;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      width: max-content;
+    }
+
+    .grid-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      min-height: 40px;
+      border-top: 1px solid #cbd5e1;
+      border-left: 1px solid #cbd5e1;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      background: #f8fafc;
+    }
+
+    .grid-cell:nth-child(-n+12) {
+      border-top: none;
+    }
+
+    .grid-cell:nth-child(12n+1) {
+      border-left: none;
+    }
+    .word-bank h2 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 1.2rem;
+    }
+
+    .word-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .word-list li {
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #eef2ff;
+      color: #1f2937;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 960px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+    }
