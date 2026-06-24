@@ -92,14 +92,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-width: 40px;
-      min-height: 40px;
       border-top: 1px solid #cbd5e1;
       border-left: 1px solid #cbd5e1;
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       background: #f8fafc;
+
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: bold;
+      color: #1f2937;
     }
 
     .grid-cell:nth-child(-n+12) {
@@ -108,6 +114,9 @@
 
     .grid-cell:nth-child(12n+1) {
       border-left: none;
+    }
+    .grid-cell:hover {
+      background: #e2e8f0;
     }
     .word-bank h2 {
       margin-top: 0;
