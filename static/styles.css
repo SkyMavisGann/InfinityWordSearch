@@ -70,7 +70,7 @@
 
     body.is-dragging, 
     body.is-dragging * {
-      cursor: url('Dark/CrossesAndResizers/Move.png') 1 1, move !important;
+      cursor: url('Dark/CrossesAndResizers/Move.png') 8 8, move !important;
       user-select: none !important;
     }
     .grid-wrapper {
