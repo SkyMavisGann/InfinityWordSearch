@@ -68,32 +68,45 @@
       font-size: 0.95rem;
     }
 
+    body.is-dragging, 
+    body.is-dragging * {
+      cursor: url('Dark/CrossesAndResizers/Move.png') 1 1, move !important;
+      user-select: none !important;
+    }
     .grid-wrapper {
       position: relative;
-      overflow: auto;
-      border: 1px solid #d1d5db;
-      border-radius: 12px;
-      background: #ffffff;
-      flex: 1;
-      min-height: 360px;
-      padding: 12px;
-    }
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(12, 40px);
-      grid-template-rows: repeat(12, 40px);
-      gap: 0;
-      border: 1px solid #cbd5e1;
-      background: #fff;
-      width: max-content;
-    }
-
-    .grid-cell {
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-top: 1px solid #cbd5e1;
-      border-left: 1px solid #cbd5e1;
+
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      background: #f1f5f9;
+      flex: 1;
+      min-height: 360px;
+      padding: 12px;
+      cursor: url('Dark/Hands/Hand_Drag1.png') 8 8, grabbing
+    }
+    .grid-container {
+      /* Acts as the (0,0) anchor point for all absolute-positioned children */
+      position: relative; 
+      
+      width: 0px;
+      height: 0px;
+      will-change: transform;
+    }
+
+    .grid-cell {
+
+      position: absolute;
+
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #cbd5e1;
       margin: 0;
       padding: 0;
       box-sizing: border-box;
@@ -101,7 +114,7 @@
 
       appearance: none;
       border: none;
-      cursor: pointer;
+      cursor: url('Dark/Hands/Hand1.png') 8 8, pointer;
       font-size: 1rem;
       font-family: inherit;
       font-weight: bold;

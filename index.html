@@ -23,30 +23,7 @@
       </div>
       <div class="grid-wrapper" id="grid-scroll-area">
         <div class="grid-container" id="wordsearch-grid" data-scale="1">
-          <!-- Placeholder grid cells -->
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
-          <button class="grid-cell">A</button>
+          <!-- Will fill with grid -->
         </div>
       </div>
     </section>
@@ -70,106 +47,148 @@
     const gridContainer = document.getElementById('wordsearch-grid');
 
     gridContainer.style.transformOrigin = '0 0';
-    gridWrapper.style.cursor = 'grab';
-    gridWrapper.style.overflow = 'auto';
 
     let scale = 1;
-    const minScale = 0.8;
+    const minScale = 0.4;
     const maxScale = 2;
     const zoomStep = 0.1;
+
+    let panX = 0; 
+    let panY = 0;
 
     let isDragging = false;
     let dragStartX = 0;
     let dragStartY = 0;
-    let startScrollLeft = 0;
-    let startScrollTop = 0;
+    let startPanX = 0;
+    let startPanY = 0;
 
-    function updateZoom(newScale, pointerX, pointerY) {
-      const prevScale = scale;
-      if (newScale === prevScale) {
-        return;
-      }
-
-      const contentX = (gridWrapper.scrollLeft + pointerX) / prevScale;
-      const contentY = (gridWrapper.scrollTop + pointerY) / prevScale;
-
-      scale = newScale;
-      gridContainer.style.transform = `scale(${scale})`;
-      gridContainer.dataset.scale = scale;
-
-      gridWrapper.scrollLeft = contentX * scale - pointerX;
-      gridWrapper.scrollTop = contentY * scale - pointerY;
+    function updateCameraTransform() {
+        gridContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
     }
 
     gridWrapper.addEventListener('wheel', (event) => {
-      event.preventDefault();
+        event.preventDefault();
 
-      const rect = gridContainer.getBoundingClientRect();
-      const pointerX = event.clientX - rect.left;
-      const pointerY = event.clientY - rect.top;
+        const nextScale = event.deltaY < 0
+            ? Math.min(maxScale, scale + zoomStep)
+            : Math.max(minScale, scale - zoomStep);
 
-      const nextScale = event.deltaY < 0
-        ? Math.min(maxScale, scale + zoomStep)
-        : Math.max(minScale, scale - zoomStep);
+        if (nextScale === scale) return;
 
-      updateZoom(nextScale, pointerX, pointerY);
+        // Get mouse position relative to the center of our viewport
+        const rect = gridWrapper.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const offsetX = mouseX - centerX;
+        const offsetY = mouseY - centerY;
+
+        // Math to ensure we zoom in towards the mouse cursor, not just the center
+        const scaleRatio = nextScale / scale;
+        panX = offsetX - (offsetX - panX) * scaleRatio;
+        panY = offsetY - (offsetY - panY) * scaleRatio;
+
+        scale = nextScale;
+        updateCameraTransform();
     }, { passive: false });
 
+    // --- Panning Logic ---
     gridWrapper.addEventListener('pointerdown', (event) => {
-      if (event.button !== 0) {
-        return;
-      }
+        if (event.button !== 0) return; // Only left click
 
-      isDragging = true;
-      dragStartX = event.clientX;
-      dragStartY = event.clientY;
-      startScrollLeft = gridWrapper.scrollLeft;
-      startScrollTop = gridWrapper.scrollTop;
-      gridWrapper.setPointerCapture(event.pointerId);
-      gridWrapper.style.cursor = 'grabbing';
+        isDragging = true;
+        dragStartX = event.clientX;
+        dragStartY = event.clientY;
+        
+        // Store where the camera was when we started dragging
+        startPanX = panX;
+        startPanY = panY;
+
+        gridWrapper.setPointerCapture(event.pointerId);
+        
     });
 
     gridWrapper.addEventListener('pointermove', (event) => {
-      if (!isDragging) {
-        return;
-      }
+        if (!isDragging) return;
 
-      const deltaX = event.clientX - dragStartX;
-      const deltaY = event.clientY - dragStartY;
+        // Calculate how far the mouse has moved
+        const deltaX = event.clientX - dragStartX;
+        const deltaY = event.clientY - dragStartY;
 
-      gridWrapper.scrollLeft = startScrollLeft - deltaX;
-      gridWrapper.scrollTop = startScrollTop - deltaY;
+        // Apply that delta to our camera position
+        panX = startPanX + deltaX;
+        panY = startPanY + deltaY;
+        document.body.classList.add('is-dragging');
+        updateCameraTransform();
     });
 
     gridWrapper.addEventListener('pointerup', (event) => {
-      if (!isDragging) {
-        return;
-      }
-
-      isDragging = false;
-      gridWrapper.releasePointerCapture(event.pointerId);
-      gridWrapper.style.cursor = 'grab';
+        isDragging = false;
+        gridWrapper.releasePointerCapture(event.pointerId);
+        document.body.classList.remove('is-dragging');
     });
 
     gridWrapper.addEventListener('pointercancel', () => {
-      if (!isDragging) {
-        return;
-      }
-
-      isDragging = false;
-      gridWrapper.style.cursor = 'grab';
+        isDragging = false;
+        document.body.classList.remove('is-dragging');
     });
+    updateCameraTransform();
 
-    // Placeholder for future game logic
-    const gridData = {
-      rows: 12,
-      columns: 12,
-      words: ['INFINITY', 'SEARCH', 'PUZZLE', 'GRID', 'WORD', 'FUN']
-    };
+
+    const cellSize = 40;
+    const container = document.getElementById('wordsearch-grid');
+
+    class GridCell {
+        constructor(x, y, letter) {
+            this.x = x;
+            this.y = y;
+            this.letter = letter;
+            this.domElement = null; // We will store the HTML <button> reference here later
+        }
+
+        render() {
+            const btn = document.createElement('button');
+            btn.classList.add('grid-cell');
+            btn.textContent = this.letter;
+
+            btn.style.left = `${this.x * cellSize}px`;
+            btn.style.top = `${this.y * cellSize}px`;
+
+            this.domElement = btn;
+            return btn;
+        }
+    }
+    
+
+    const gameState = new Map();
+    function generateLevelData() {
+        
+        gameState.set("0,0", new GridCell(0, 0, "I"));
+        gameState.set("1,0", new GridCell(1, 0, "N"));
+        gameState.set("2,0", new GridCell(2, 0, "F"));
+        
+        
+        gameState.set("-1,0", new GridCell(-1, 0, "W"));
+        gameState.set("-1,1", new GridCell(-1, 1, "O"));
+        gameState.set("-1,2", new GridCell(-1, 2, "R"));
+        gameState.set("-1,3", new GridCell(-1, 3, "D"));
+    }
+    
+    function renderAllCells() {
+        container.innerHTML = '';
+
+        gameState.forEach((cellData, coordinateKey) => {
+            const element = cellData.render();
+            container.appendChild(element);
+        });
+    }
 
     function initializeGame() {
-      // Future logic: populate grid, place words, attach event handlers
-      console.log('Word search structure ready', gridData);
+      generateLevelData();
+      renderAllCells();
     }
 
     initializeGame();
