@@ -73,6 +73,9 @@
       cursor: url('Dark/CrossesAndResizers/Move.png') 8 8, move !important;
       user-select: none !important;
     }
+
+    
+
     .grid-wrapper {
       position: relative;
       overflow: hidden;
@@ -120,6 +123,36 @@
       font-weight: bold;
       color: #1f2937;
     }
+    .grid-cell.in-path, 
+    .grid-cell.in-path * {
+
+      position: absolute;
+
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #cbd5e1;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      background: #537aa1;
+
+      appearance: none;
+      border: none;
+      cursor: url('Dark/Hands/Hand1.png') 8 8, pointer;
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: bold;
+      color: #1f2937;
+    }
+
+    .grid-wrapper.is-selecting, 
+    .grid-wrapper.is-selecting * {
+      cursor: url('Dark/Hands/Hand3.png') 8 8, move !important;
+      user-select: none !important;
+    }
 
     .grid-cell:nth-child(-n+12) {
       border-top: none;
@@ -131,6 +164,20 @@
     .grid-cell:hover {
       background: #e2e8f0;
     }
+    .grid-cell.in-path:hover {
+      background: #3b4d64;
+    }
+  .grid-cell.found,
+  .grid-cell.found * {
+    background-color: #fdc5fe;
+    color: white;
+    border-color: #f692bf;
+    /* Optional: a little pop animation when found */
+    transform: scale(0.9);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+  }
+
+
     .word-bank h2 {
       margin-top: 0;
       margin-bottom: 12px;
@@ -152,6 +199,12 @@
       color: #1f2937;
       font-weight: 600;
       letter-spacing: 0.5px;
+    }
+    .word-list li.crossed-off {
+      text-decoration: line-through;
+      opacity: 0.4;
+      background: transparent;
+      box-shadow: none;
     }
 
     @media (max-width: 960px) {
