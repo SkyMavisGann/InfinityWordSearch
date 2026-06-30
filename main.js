@@ -290,7 +290,6 @@ if (helpBtn && closeHelpBtn && helpModal) {
     // .close() hides it again
     closeHelpBtn.addEventListener('click', () => helpModal.close());
     
-    // Optional pro-tip: Let users click the dimmed background to close it
     helpModal.addEventListener('click', (e) => {
         const dialogDimensions = helpModal.getBoundingClientRect();
         if (
@@ -423,8 +422,13 @@ gridWrapper.addEventListener('pointerup', (event) => {
 
                 const startCoord = currentSelectionPath[0];
                 const endCoord = currentSelectionPath[currentSelectionPath.length - 1];
-                foundLines.push(new WordLine(startCoord, endCoord));
+                const newLine = new WordLine(startCoord, endCoord);
+                foundLines.push(newLine);
 
+
+                if (gridContainer) {
+                    gridContainer.prepend(newLine.render());
+                }
                 let needsRender = false;
 
                 currentSelectionPath.forEach(key => {
