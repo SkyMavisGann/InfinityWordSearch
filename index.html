@@ -36,13 +36,17 @@
       </ul>
     </aside>
   </main>
-
-  <script>
+  <script type="module" src="main.js"></script>
+  <!-- <script>
+    // @ts-check
     const gridWrapper = document.getElementById('grid-scroll-area');
     const gridContainer = document.getElementById('wordsearch-grid');
 
     const wordList = document.getElementById('word-list');
 
+    if (!gridWrapper || !gridContainer || !wordList) {
+        throw new Error('Required game elements were not found');
+    }
     gridContainer.style.transformOrigin = '0 0';
 
     let scale = 1;
@@ -56,9 +60,12 @@
     let isDragging = false;
     //for if you are selecting a button
     let isSelecting = false;
-    let selectStartX = null;
-    let selectStartY = null;
+    /** @type {number}*/
+    let selectStartX = 0;
+    /** @type {number}*/
+    let selectStartY = 0;
     //selection that will highlight and dehighlight
+    /** @type {string[]} */
     let currentSelectionPath = [];
 
     let dragStartX = 0;
@@ -67,13 +74,15 @@
     let startPanY = 0;
 
     const gridData = {
-        words: ['INFINITY', 'SEARCH', 'PUZZLE', 'OR', 'WORD', 'FUN']
+        words: ['INFINITY', 'SEARCH', 'PUZZLE', 'OR', 'WORD', 'FUN', 'WIN', 'GOLD']
     };
 
     let wordsRemaining = [...gridData.words];
 
     function updateCameraTransform() {
-        gridContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        if (gridContainer) {
+            gridContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        }
     }
 
     gridWrapper.addEventListener('wheel', (event) => {
@@ -150,8 +159,8 @@
             const elementUnderCursor = document.elementFromPoint(event.clientX, event.clientY);
         
             if (elementUnderCursor && elementUnderCursor.classList.contains('grid-cell')) {
-                const currentX = parseInt(elementUnderCursor.dataset.x, 10);
-                const currentY = parseInt(elementUnderCursor.dataset.y, 10);
+                const currentX = Number(parseInt(elementUnderCursor.dataset.x, 10));
+                const currentY = Number(parseInt(elementUnderCursor.dataset.y, 10));
 
                 // Calculate the line!
                 const path = getCellsInLine(selectStartX, selectStartY, currentX, currentY);
@@ -223,10 +232,26 @@
                 // Lock the CSS on the grid buttons
                 currentSelectionPath.forEach(key => {
                     const cellData = gameState.get(key);
+                    
+                    cellData.isFound = true;
+                    //key is a x,y type
+                    //loop through all appearing sections and check if its inbetween range start and range end
+                    //if it is all all letters to the field
+                    /** @type {Vector2} */
+                    const pos = keyToVector2(key);
                     if (cellData && cellData.domElement) {
                         cellData.domElement.classList.remove('in-path');
                         cellData.domElement.classList.add('found');
                     }
+
+                    AppearingSections.forEach(section => {
+                        if (section.isWithinBounds(pos.x, pos.y)) {
+                            section.addAllLetters();
+                        }
+                    });
+
+                    
+                    
                 });
 
                 // Find the list item in the sidebar and cross it off
@@ -248,8 +273,8 @@
             clearPath();
             
             isSelecting = false;
-            selectStartX = null;
-            selectStartY = null;
+            selectStartX = 0;
+            selectStartY = 0;
             gridWrapper.classList.remove('is-selecting');
         } else if (isDragging) {
             isDragging = false;
@@ -269,11 +294,17 @@
     const cellSize = 40;
 
     class GridCell {
+        /**
+         * @param {number} x
+         * @param {number} y
+         * @param {string} letter
+         */
         constructor(x, y, letter) {
             this.x = x;
             this.y = y;
             this.letter = letter;
             this.domElement = null; 
+            this.isFound = false;
         }
 
         render() {
@@ -285,8 +316,12 @@
             btn.style.top = `${this.y * cellSize}px`;
 
 
-            btn.dataset.x = this.x;
-            btn.dataset.y = this.y;
+            btn.dataset.x = String(this.x);
+            btn.dataset.y = String(this.y);
+
+            if (this.isFound) {
+                btn.classList.add('found');
+            }
             
             this.domElement = btn;
             return btn;
@@ -295,6 +330,12 @@
     
 
     const gameState = new Map();
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {string} letter
+     * @param {Map<string, GridCell>} state
+     */
     function addLetter(x, y, letter, state) {
         state.set(`${x},${y}`, new GridCell(x, y, letter));
     }
@@ -320,9 +361,11 @@
 
         
         gameState.set("0,1", new GridCell(0, 1, "R"));
-        gameState.set("0,2", new GridCell(0, 2, "I"));
+        gameState.set("0,2", new GridCell(0, 2, "L"));
         gameState.set("0,3", new GridCell(0, 3, "E"));
         addLetter(0, 4, "P", gameState);
+
+        addLetter(1, 3, "D", gameState);
     }
     //apearing sections after you sucessfully open a square
     class Vector2 {
@@ -331,18 +374,71 @@
             this.y = y;
         }
     }
+    /**
+     * @param {string} key
+     */
+    function keyToVector2(key) {
+        // 1. Split the string into an array of two strings: ["5", "-6"]
+        // 2. Map them through the Number function to convert them to integers: [5, -6]
+        // 3. Destructure the array directly into x and y variables
+        const [x, y] = key.split(',').map(Number);
+        
+        return new Vector2(x, y);
+    }
 
     class AppearingSection {
-        constructor(RangeStart, RangeEnd, gridCells) {
-            this.RangeStart = RangeStart;
-            this.RangeEnd = RangeEnd;
+        
+        /**
+         * @param {GridCell[]} gridCells
+         */
+        constructor(gridCells) {
+            //gridcells are a array of 
             this.gridCells = gridCells;
+            this.hasTriggered = false;
+            let Min = new Vector2(Infinity, Infinity);
+            let Max = new Vector2(-Infinity, -Infinity);
+            gridCells.forEach(cell => {
+                
+                //if max(element) > max (need to find the most top left gridcell)
+                //if bottom left gridcell is les then min 
+                Min.x = Math.min(Min.x, cell.x);
+                Min.y = Math.min(Min.y, cell.y);
+
+                Max.x = Math.max(Max.x, cell.x);
+                Max.y = Math.max(Max.y, cell.y);
+            });
+            //add one
+            Min = new Vector2(Min.x - 1, Min.y - 1);
+            Max = new Vector2(Max.x + 1, Max.y + 1);
+
+            this.RangeStart = Min;
+            this.RangeEnd = Max;
+        }
+        /**
+         * @param {number} x 
+         * @param {number} y
+         */
+        isWithinBounds(x, y) {
+            return x >= this.RangeStart.x && x <= this.RangeEnd.x &&
+                   y >= this.RangeStart.y && y <= this.RangeEnd.y;
+        }
+        addAllLetters() {
+            if (this.hasTriggered) return; // Exit if already triggered
+            this.hasTriggered = true;
+
+            this.gridCells.forEach(gridLetter => {
+                addLetter(gridLetter.x, gridLetter.y, gridLetter.letter, gameState);
+            });
+            renderAllCells();
         }
     }
+    /**@type {AppearingSection[]} */
     const AppearingSections = [];
-    const GridCellsToOpen = new Map();
-    addLetter(-2, 0, "G", GridCellsToOpen);
-    AppearingSections.push(new AppearingSection(new Vector2(0, 0), new Vector2(0, 1), GridCellsToOpen))
+    /** @type GridCell[] */
+    const GridCellsToOpen = [];
+    GridCellsToOpen.push(new GridCell(-2, 0 , "G"));
+    const section = new AppearingSection(GridCellsToOpen);
+    AppearingSections.push(section);
 
     wordList.innerHTML = '';
     gridData.words.forEach(element => {
@@ -369,6 +465,13 @@
 
     initializeGame();
 
+    /**
+     * @param {number} startX
+     * @param {number} startY
+     * @param {number} endX
+     * @param {number} endY
+     * @returns {string[]}
+     */
     function getCellsInLine(startX, startY, endX, endY) {
         const dx = endX - startX;
         const dy = endY - startY;
@@ -395,6 +498,6 @@
         }
         return cellsInPath;
     }
-  </script>
+  </script> -->
 </body>
 </html>
