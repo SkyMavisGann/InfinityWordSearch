@@ -331,7 +331,7 @@ gridWrapper.addEventListener('wheel', (event) => {
 }, { passive: false });
 
 gridWrapper.addEventListener('pointerdown', (event) => {
-    if (event.button !== 0) return; 
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
 
     /** @type {HTMLElement | null} */
     const targetCell = /** @type {HTMLElement} */ (event.target).closest('.grid-cell');
