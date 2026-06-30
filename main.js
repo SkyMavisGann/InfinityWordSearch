@@ -302,6 +302,11 @@ if (helpBtn && closeHelpBtn && helpModal) {
             helpModal.close();
         }
     });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('help')) {
+        helpModal.showModal();
+    }
 }
 gridWrapper.addEventListener('wheel', (event) => {
     event.preventDefault();
@@ -411,7 +416,7 @@ gridWrapper.addEventListener('pointerup', (event) => {
                 if (scoreDisplay) {
                     scoreDisplay.textContent = totalScore.toString();
                     
-                    // Optional: Add a quick CSS pop animation to the score so it feels rewarding
+                    
                     scoreDisplay.style.transform = "scale(1.2)";
                     setTimeout(() => scoreDisplay.style.transform = "scale(1)", 150);
                 }
@@ -419,7 +424,7 @@ gridWrapper.addEventListener('pointerup', (event) => {
                 const startCoord = currentSelectionPath[0];
                 const endCoord = currentSelectionPath[currentSelectionPath.length - 1];
                 foundLines.push(new WordLine(startCoord, endCoord));
-                
+
                 let needsRender = false;
 
                 currentSelectionPath.forEach(key => {
