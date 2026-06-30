@@ -3,6 +3,7 @@ import { keyToVector2, addLetter } from './utils.js';
 import { getCellsInLine } from './utils.js';
 import { GridCell } from './GridCell.js';
 import { AppearingSection } from './AppearingSection.js';
+import { WordLine } from './WordLine.js';
 
 /** @type {HTMLElement | null} */
 const gridWrapper = document.getElementById('grid-scroll-area');
@@ -10,6 +11,10 @@ const gridWrapper = document.getElementById('grid-scroll-area');
 const gridContainer = document.getElementById('wordsearch-grid');
 /** @type {HTMLElement | null} */
 const wordList = document.getElementById('word-list');
+
+/** @type {HTMLElement | null} */
+const scoreDisplay = document.getElementById('score-display');
+let totalScore = 0;
 
 if (!gridWrapper || !gridContainer || !wordList) {
     throw new Error('Required game elements were not found');
@@ -63,6 +68,9 @@ const gameState = new Map();
 /** @type {AppearingSection[]} */
 const AppearingSections = [];
 
+/** @type {WordLine[]} */
+const foundLines = [];
+
 // --- Functions ---
 function updateCameraTransform() {
     if (gridContainer) {
@@ -79,9 +87,53 @@ function clearPath() {
     });
 }
 
+/**
+ * Calculates points based on word length and how many unique sections it spans
+ * @param {string[]} pathCoordinates - Array of string keys (e.g., ["0,0", "1,0"])
+ * @returns {number}
+ */
+function calculateWordPoints(pathCoordinates) {
+    // A Set stores unique values. If we add "Section 1" five times, it only counts it once!
+    /**@type {Set<string>} */
+    const touchedSections = new Set();
+
+    pathCoordinates.forEach(key => {
+        const pos = keyToVector2(key);
+        let inAnyAppearingSection = false;
+
+        // Check if this specific letter falls inside any of our Appearing Sections
+        AppearingSections.forEach((section, index) => {
+            if (section.isWithinBounds(pos.x, pos.y, false)) {
+                touchedSections.add(`section_${index}`);
+                inAnyAppearingSection = true;
+            }
+        });
+
+        // If it wasn't in ANY appearing section bounds, it must be in the Base Grid
+        if (!inAnyAppearingSection) {
+            touchedSections.add('base_grid');
+        }
+    });
+
+    // The span is simply how many unique zones are in our Set
+    const span = touchedSections.size;
+    
+    // Exact formula: ((wordcount - 2) * span)
+    const points = (pathCoordinates.length - 2) * span;
+
+    console.log(`Word Length: ${pathCoordinates.length} | Span: ${span} sections | Points: ${points}`);
+    
+    // Return the points (using Math.max just to ensure 1-letter glitches don't award negative points)
+    return Math.max(0, points);
+}
 function renderAllCells() {
     if (!gridContainer) return;
     gridContainer.innerHTML = '';
+
+    foundLines.forEach(line => {
+        gridContainer.appendChild(line.render());
+    });
+
     gameState.forEach((cellData) => {
         const element = cellData.render();
         gridContainer.appendChild(element);
@@ -226,6 +278,31 @@ function generateLevelData() {
 }
 
 // --- Event Listeners ---
+// --- Help Modal Logic ---
+const helpBtn = document.getElementById('help-btn');
+const closeHelpBtn = document.getElementById('close-help');
+const helpModal = /** @type {HTMLDialogElement} */ (document.getElementById('help-modal'));
+
+if (helpBtn && closeHelpBtn && helpModal) {
+    // .showModal() automatically dims the background and traps focus!
+    helpBtn.addEventListener('click', () => helpModal.showModal());
+    
+    // .close() hides it again
+    closeHelpBtn.addEventListener('click', () => helpModal.close());
+    
+    // Optional pro-tip: Let users click the dimmed background to close it
+    helpModal.addEventListener('click', (e) => {
+        const dialogDimensions = helpModal.getBoundingClientRect();
+        if (
+            e.clientX < dialogDimensions.left ||
+            e.clientX > dialogDimensions.right ||
+            e.clientY < dialogDimensions.top ||
+            e.clientY > dialogDimensions.bottom
+        ) {
+            helpModal.close();
+        }
+    });
+}
 gridWrapper.addEventListener('wheel', (event) => {
     event.preventDefault();
     const nextScale = event.deltaY < 0 ? Math.min(maxScale, scale + zoomStep) : Math.max(minScale, scale - zoomStep);
@@ -328,6 +405,21 @@ gridWrapper.addEventListener('pointerup', (event) => {
             else if (wordsRemaining.includes(reversedWord)) matchedWord = reversedWord;
 
             if (matchedWord != null) {
+                const pointsEarned = calculateWordPoints(currentSelectionPath);
+                totalScore += pointsEarned;
+                
+                if (scoreDisplay) {
+                    scoreDisplay.textContent = totalScore.toString();
+                    
+                    // Optional: Add a quick CSS pop animation to the score so it feels rewarding
+                    scoreDisplay.style.transform = "scale(1.2)";
+                    setTimeout(() => scoreDisplay.style.transform = "scale(1)", 150);
+                }
+
+                const startCoord = currentSelectionPath[0];
+                const endCoord = currentSelectionPath[currentSelectionPath.length - 1];
+                foundLines.push(new WordLine(startCoord, endCoord));
+                
                 let needsRender = false;
 
                 currentSelectionPath.forEach(key => {
@@ -342,7 +434,7 @@ gridWrapper.addEventListener('pointerup', (event) => {
 
                     const pos = keyToVector2(key);
                     AppearingSections.forEach(section => {
-                        if (section.isWithinBounds(pos.x, pos.y)) {
+                        if (section.isWithinBounds(pos.x, pos.y, true)) {
                             if (section.addAllLetters(gameState)) needsRender = true;
                         }
                     });

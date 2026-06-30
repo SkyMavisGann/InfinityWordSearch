@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Infinity Word Search</title>
   <link rel="stylesheet" href="static/styles.css">
-  <style>
-    
-  </style>
 </head>
 <body>
   <header>
@@ -19,6 +16,10 @@
         <div>
           <p id="gameplay-title" style="margin: 0; font-size: 1rem; font-weight: 700;">Gameplay</p>
           <p style="margin: 4px 0 0; color: #475569; font-size: 0.92rem;">Use the mouse wheel to zoom around the cursor. Click and drag to pan the grid.</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="margin: 0; font-size: 0.92rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Points</p>
+          <p id="score-display" style="margin: 0; font-size: 2rem; font-weight: 800; color: #ec4899;">0</p>
         </div>
       </div>
       <div class="grid-wrapper" id="grid-scroll-area">
@@ -36,468 +37,47 @@
       </ul>
     </aside>
   </main>
+
+  <button id="help-btn" class="icon-btn" aria-label="How to play">?</button>
+
+  <dialog id="help-modal" class="help-modal">
+    <div class="modal-content">
+      <h2>How to Play</h2>
+      
+      <div class="rules-grid">
+        <div class="rule-card">
+          <div class="visual anim-expand">
+            <div class="box"></div><div class="box found"></div><div class="box new"></div>
+          </div>
+          <p>Edge words <strong>expand</strong> the board.</p>
+        </div>
+
+        <div class="rule-card">
+          <div class="visual anim-reuse">
+            <div class="box found"></div><div class="box error">X</div>
+          </div>
+          <p><strong>No reusing</strong> letters.</p>
+        </div>
+
+        <div class="rule-card">
+          <div class="visual anim-fill">
+            <div class="box c1"></div><div class="box c2"></div><div class="box c3"></div>
+          </div>
+          <p><strong>Every</strong> letter is connected to a possible word.</p>
+        </div>
+
+        <div class="rule-card">
+          <div class="visual">
+            <div class="trophy">🏆</div>
+          </div>
+          <p>Points are based on how <strong>long</strong> a word is and how many <strong>sections</strong> its in.</p>
+        </div>
+      </div>
+
+      <button id="close-help" class="primary-btn">Got it!</button>
+    </div>
+  </dialog>
   <script type="module" src="main.js"></script>
-  <!-- <script>
-    // @ts-check
-    const gridWrapper = document.getElementById('grid-scroll-area');
-    const gridContainer = document.getElementById('wordsearch-grid');
-
-    const wordList = document.getElementById('word-list');
-
-    if (!gridWrapper || !gridContainer || !wordList) {
-        throw new Error('Required game elements were not found');
-    }
-    gridContainer.style.transformOrigin = '0 0';
-
-    let scale = 1;
-    const minScale = 0.4;
-    const maxScale = 2;
-    const zoomStep = 0.1;
-
-    let panX = 0; 
-    let panY = 0;
-
-    let isDragging = false;
-    //for if you are selecting a button
-    let isSelecting = false;
-    /** @type {number}*/
-    let selectStartX = 0;
-    /** @type {number}*/
-    let selectStartY = 0;
-    //selection that will highlight and dehighlight
-    /** @type {string[]} */
-    let currentSelectionPath = [];
-
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let startPanX = 0;
-    let startPanY = 0;
-
-    const gridData = {
-        words: ['INFINITY', 'SEARCH', 'PUZZLE', 'OR', 'WORD', 'FUN', 'WIN', 'GOLD']
-    };
-
-    let wordsRemaining = [...gridData.words];
-
-    function updateCameraTransform() {
-        if (gridContainer) {
-            gridContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-        }
-    }
-
-    gridWrapper.addEventListener('wheel', (event) => {
-        event.preventDefault();
-
-        const nextScale = event.deltaY < 0
-            ? Math.min(maxScale, scale + zoomStep)
-            : Math.max(minScale, scale - zoomStep);
-
-        if (nextScale === scale) return;
-
-        // Get mouse position relative to the center of our viewport
-        const rect = gridWrapper.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
-        
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-
-        const offsetX = mouseX - centerX;
-        const offsetY = mouseY - centerY;
-
-        // Math to ensure we zoom in towards the mouse cursor, not just the center
-        const scaleRatio = nextScale / scale;
-        panX = offsetX - (offsetX - panX) * scaleRatio;
-        panY = offsetY - (offsetY - panY) * scaleRatio;
-
-        scale = nextScale;
-        updateCameraTransform();
-    }, { passive: false });
-
-    // --- Panning Logic ---
-    gridWrapper.addEventListener('pointerdown', (event) => {
-        if (event.button !== 0) return; // Only left click
-
-        const targetCell = event.target.closest('.grid-cell');
-
-
-    if (targetCell) {
-            // --- START WORD SELECTION ---
-            isSelecting = true;
-            // Parse the coordinates we stored in the HTML data attributes
-            selectStartX = parseInt(targetCell.dataset.x, 10);
-            selectStartY = parseInt(targetCell.dataset.y, 10);
-            
-            console.log(`Started selecting at ${selectStartX}, ${selectStartY}`);
-            gridWrapper.classList.add('is-selecting');
-        } else {
-            isDragging = true;
-            dragStartX = event.clientX;
-            dragStartY = event.clientY;
-            
-            // Store where the camera was when we started dragging
-            startPanX = panX;
-            startPanY = panY;
-            gridWrapper.setPointerCapture(event.pointerId);
-            document.body.classList.add('is-dragging');
-        }
-
-        
-    });
-
-    gridWrapper.addEventListener('pointermove', (event) => {
-        if (isDragging) {
-            // Calculate how far the mouse has moved
-            const deltaX = event.clientX - dragStartX;
-            const deltaY = event.clientY - dragStartY;
-
-            // Apply that delta to our camera position
-            panX = startPanX + deltaX;
-            panY = startPanY + deltaY;
-            updateCameraTransform();
-        } else if (isSelecting) {
-            const elementUnderCursor = document.elementFromPoint(event.clientX, event.clientY);
-        
-            if (elementUnderCursor && elementUnderCursor.classList.contains('grid-cell')) {
-                const currentX = Number(parseInt(elementUnderCursor.dataset.x, 10));
-                const currentY = Number(parseInt(elementUnderCursor.dataset.y, 10));
-
-                // Calculate the line!
-                const path = getCellsInLine(selectStartX, selectStartY, currentX, currentY);
-                
-
-                if (path.length > 0 && JSON.stringify(path) !== JSON.stringify(currentSelectionPath)) {
-                    
-                    // CLEAR the old highlights
-                    currentSelectionPath.forEach(key => {
-                        const cellData = gameState.get(key);
-                        if (cellData && cellData.domElement) {
-                            cellData.domElement.classList.remove('in-path');
-                        }
-                    });
-
-                    // UPDATE our state to the new path
-                    currentSelectionPath = path;
-
-                    // APPLY the new highlights
-                    currentSelectionPath.forEach(key => {
-                        const cellData = gameState.get(key);
-                        if (cellData && cellData.domElement) {
-                            cellData.domElement.classList.add('in-path');
-                        }
-                    });
-                }
-            }
-        }
-
-        
-    });
-
-    function clearPath() {
-        currentSelectionPath.forEach(key => {
-                const cellData = gameState.get(key);
-                if (cellData && cellData.domElement) {
-                    cellData.domElement.classList.remove('in-path');
-                }
-            });
-    }
-    gridWrapper.addEventListener('pointerup', (event) => {
-        if (isSelecting) {
-            let selectedWord = "";
-
-            currentSelectionPath.forEach(key => {
-                const cellData = gameState.get(key);
-                if (cellData) {
-                    if (cellData.domElement.classList.contains('found')) {
-                        clearPath();
-                        return;
-                    }
-                    selectedWord += cellData.letter;
-                }
-            });
-
-            const reversedWord = selectedWord.split('').reverse().join('');
-
-            let matchedWord = null;
-            if (wordsRemaining.includes(selectedWord)) {
-                matchedWord = selectedWord;
-            } else if (wordsRemaining.includes(reversedWord)) {
-                matchedWord = reversedWord;
-            }
-            
-
-            if (matchedWord != null) {
-                console.log(`Checking a word: ${matchedWord}!`);
-                
-                // Lock the CSS on the grid buttons
-                currentSelectionPath.forEach(key => {
-                    const cellData = gameState.get(key);
-                    
-                    cellData.isFound = true;
-                    //key is a x,y type
-                    //loop through all appearing sections and check if its inbetween range start and range end
-                    //if it is all all letters to the field
-                    /** @type {Vector2} */
-                    const pos = keyToVector2(key);
-                    if (cellData && cellData.domElement) {
-                        cellData.domElement.classList.remove('in-path');
-                        cellData.domElement.classList.add('found');
-                    }
-
-                    AppearingSections.forEach(section => {
-                        if (section.isWithinBounds(pos.x, pos.y)) {
-                            section.addAllLetters();
-                        }
-                    });
-
-                    
-                    
-                });
-
-                // Find the list item in the sidebar and cross it off
-                const listItems = document.querySelectorAll('#word-list li');
-                listItems.forEach(li => {
-                    if (li.textContent === matchedWord) {
-                        li.classList.add('crossed-off');
-                    }
-                });
-
-                // Remove the word from our working array so it can't be found again
-                wordsRemaining = wordsRemaining.filter(w => w !== matchedWord);
-                
-                if (wordsRemaining.length === 0) {
-                    console.log("You found all the words!");
-                    // Future: Trigger a win screen or expand the grid here
-                }
-            }
-            clearPath();
-            
-            isSelecting = false;
-            selectStartX = 0;
-            selectStartY = 0;
-            gridWrapper.classList.remove('is-selecting');
-        } else if (isDragging) {
-            isDragging = false;
-            gridWrapper.releasePointerCapture(event.pointerId);
-            document.body.classList.remove('is-dragging');
-        }
-        
-    });
-
-    gridWrapper.addEventListener('pointercancel', () => {
-        isDragging = false;
-        document.body.classList.remove('is-dragging');
-    });
-    updateCameraTransform();
-
-
-    const cellSize = 40;
-
-    class GridCell {
-        /**
-         * @param {number} x
-         * @param {number} y
-         * @param {string} letter
-         */
-        constructor(x, y, letter) {
-            this.x = x;
-            this.y = y;
-            this.letter = letter;
-            this.domElement = null; 
-            this.isFound = false;
-        }
-
-        render() {
-            const btn = document.createElement('button');
-            btn.classList.add('grid-cell');
-            btn.textContent = this.letter;
-
-            btn.style.left = `${this.x * cellSize}px`;
-            btn.style.top = `${this.y * cellSize}px`;
-
-
-            btn.dataset.x = String(this.x);
-            btn.dataset.y = String(this.y);
-
-            if (this.isFound) {
-                btn.classList.add('found');
-            }
-            
-            this.domElement = btn;
-            return btn;
-        }
-    }
-    
-
-    const gameState = new Map();
-    /**
-     * @param {number} x
-     * @param {number} y
-     * @param {string} letter
-     * @param {Map<string, GridCell>} state
-     */
-    function addLetter(x, y, letter, state) {
-        state.set(`${x},${y}`, new GridCell(x, y, letter));
-    }
-    function generateLevelData() {
-        
-        gameState.set("0,0", new GridCell(0, 0, "I"));
-        gameState.set("1,0", new GridCell(1, 0, "N"));
-        gameState.set("2,0", new GridCell(2, 0, "F"));
-        addLetter(3, 0, "I", gameState);
-        addLetter(4, 0, "N", gameState);
-        addLetter(5, 0, "I", gameState);
-        addLetter(6, 0, "T", gameState);
-        addLetter(7, 0, "Y", gameState);
-
-        addLetter(2, 1, "U", gameState);
-        addLetter(2, 2, "N", gameState);
-        
-        
-        gameState.set("-1,0", new GridCell(-1, 0, "W"));
-        gameState.set("-1,1", new GridCell(-1, 1, "O"));
-        gameState.set("-1,2", new GridCell(-1, 2, "R"));
-        gameState.set("-1,3", new GridCell(-1, 3, "D"));
-
-        
-        gameState.set("0,1", new GridCell(0, 1, "R"));
-        gameState.set("0,2", new GridCell(0, 2, "L"));
-        gameState.set("0,3", new GridCell(0, 3, "E"));
-        addLetter(0, 4, "P", gameState);
-
-        addLetter(1, 3, "D", gameState);
-    }
-    //apearing sections after you sucessfully open a square
-    class Vector2 {
-        constructor(x = 0, y = 0) {
-            this.x = x;
-            this.y = y;
-        }
-    }
-    /**
-     * @param {string} key
-     */
-    function keyToVector2(key) {
-        // 1. Split the string into an array of two strings: ["5", "-6"]
-        // 2. Map them through the Number function to convert them to integers: [5, -6]
-        // 3. Destructure the array directly into x and y variables
-        const [x, y] = key.split(',').map(Number);
-        
-        return new Vector2(x, y);
-    }
-
-    class AppearingSection {
-        
-        /**
-         * @param {GridCell[]} gridCells
-         */
-        constructor(gridCells) {
-            //gridcells are a array of 
-            this.gridCells = gridCells;
-            this.hasTriggered = false;
-            let Min = new Vector2(Infinity, Infinity);
-            let Max = new Vector2(-Infinity, -Infinity);
-            gridCells.forEach(cell => {
-                
-                //if max(element) > max (need to find the most top left gridcell)
-                //if bottom left gridcell is les then min 
-                Min.x = Math.min(Min.x, cell.x);
-                Min.y = Math.min(Min.y, cell.y);
-
-                Max.x = Math.max(Max.x, cell.x);
-                Max.y = Math.max(Max.y, cell.y);
-            });
-            //add one
-            Min = new Vector2(Min.x - 1, Min.y - 1);
-            Max = new Vector2(Max.x + 1, Max.y + 1);
-
-            this.RangeStart = Min;
-            this.RangeEnd = Max;
-        }
-        /**
-         * @param {number} x 
-         * @param {number} y
-         */
-        isWithinBounds(x, y) {
-            return x >= this.RangeStart.x && x <= this.RangeEnd.x &&
-                   y >= this.RangeStart.y && y <= this.RangeEnd.y;
-        }
-        addAllLetters() {
-            if (this.hasTriggered) return; // Exit if already triggered
-            this.hasTriggered = true;
-
-            this.gridCells.forEach(gridLetter => {
-                addLetter(gridLetter.x, gridLetter.y, gridLetter.letter, gameState);
-            });
-            renderAllCells();
-        }
-    }
-    /**@type {AppearingSection[]} */
-    const AppearingSections = [];
-    /** @type GridCell[] */
-    const GridCellsToOpen = [];
-    GridCellsToOpen.push(new GridCell(-2, 0 , "G"));
-    const section = new AppearingSection(GridCellsToOpen);
-    AppearingSections.push(section);
-
-    wordList.innerHTML = '';
-    gridData.words.forEach(element => {
-        const li = document.createElement('li');
-        
-        li.textContent = element;
-        wordList.appendChild(li);
-    });
-    
-    
-    function renderAllCells() {
-        gridContainer.innerHTML = '';
-
-        gameState.forEach((cellData, coordinateKey) => {
-            const element = cellData.render();
-            gridContainer.appendChild(element);
-        });
-    }
-
-    function initializeGame() {
-      generateLevelData();
-      renderAllCells();
-    }
-
-    initializeGame();
-
-    /**
-     * @param {number} startX
-     * @param {number} startY
-     * @param {number} endX
-     * @param {number} endY
-     * @returns {string[]}
-     */
-    function getCellsInLine(startX, startY, endX, endY) {
-        const dx = endX - startX;
-        const dy = endY - startY;
-
-        const isHorizontal = dy === 0;
-        const isVertical = dx === 0;
-        const isDiagonal = Math.abs(dx) === Math.abs(dy);
-
-        if (!isHorizontal && !isVertical && !isDiagonal) {
-            return []; // Not a valid straight line, return empty array
-        }
-
-        const stepX = dx === 0 ? 0 : (dx > 0 ? 1 : -1);
-        const stepY = dy === 0 ? 0 : (dy > 0 ? 1 : -1);
-
-        const length = Math.max(Math.abs(dx), Math.abs(dy)) + 1;
-
-        const cellsInPath = [];
-
-        for (let i = 0; i < length; i++) {
-            const x = startX + (stepX * i);
-            const y = startY + (stepY * i);
-            cellsInPath.push(`${x},${y}`); // Store the string keys we use in our gameState Map
-        }
-        return cellsInPath;
-    }
-  </script> -->
+  
 </body>
 </html>

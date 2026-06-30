@@ -167,15 +167,25 @@
     .grid-cell.in-path:hover {
       background: #3b4d64;
     }
-  .grid-cell.found,
-  .grid-cell.found * {
-    background-color: #fdc5fe;
-    color: white;
-    border-color: #f692bf;
-    /* Optional: a little pop animation when found */
-    transform: scale(0.9);
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-  }
+.grid-cell.found, 
+.grid-cell.found * {
+  background-color: #fdc5fe;
+  color: white;
+  border-color: #f692bf;
+  border-radius: 30%; /* Rounds out the boxes! */
+  transform: scale(0.9);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+  z-index: 2; /* Ensures the letters sit ABOVE the line */
+}
+
+.word-line {
+  position: absolute;
+  background-color: #fbcfe8; /* A lighter pink so the dark pink circles pop! */
+  height: 20px; /* Thick enough to see, thin enough to not block diagonals */
+  border-radius: 10px; /* Rounds the ends of the line */
+  z-index: 1; /* Sits behind the letters, but above the board */
+  pointer-events: none; /* So you can still click through it */
+}
 
 
     .word-bank h2 {
@@ -206,6 +216,135 @@
       background: transparent;
       box-shadow: none;
     }
+
+    #score-display {
+      transition: transform 0.15s ease-out;
+    }
+
+      /* --- Help Button --- */
+  .icon-btn {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #fdc5fe;
+    color: #831843;
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.1s;
+  }
+  .icon-btn:hover { transform: scale(1.1); }
+
+  /* --- Native Dialog Styling --- */
+  .help-modal {
+    border: none;
+    border-radius: 16px;
+    padding: 0;
+    background: white;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    max-width: 500px;
+    width: 90%;
+  }
+  .help-modal::backdrop {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px); /* Modern frosted glass effect */
+  }
+  .modal-content {
+    padding: 32px;
+    text-align: center;
+  }
+  .modal-content h2 { margin-top: 0; color: #1f2937; }
+
+  /* --- Rule Cards --- */
+  .rules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 32px 0;
+  }
+  .rule-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .rule-card p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.4;
+  }
+  .rule-card strong { color: #831843; }
+
+  /* --- Abstract Visuals --- */
+  .visual {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .box {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: #e2e8f0;
+  }
+  .box.found { background: #fdc5fe; }
+  .trophy { font-size: 2.5rem; }
+
+  /* --- Mini Animations (Show, Don't Tell!) --- */
+  .anim-expand .new {
+    animation: popIn 2s infinite;
+  }
+  @keyframes popIn {
+    0%, 50% { opacity: 0; transform: scale(0.5); }
+    60%, 100% { opacity: 1; transform: scale(1); }
+  }
+
+  .anim-reuse .error {
+    background: #ef4444;
+    color: white;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    animation: shake 2s infinite;
+  }
+  @keyframes shake {
+    0%, 80% { transform: translateX(0); }
+    85% { transform: translateX(-4px); }
+    90% { transform: translateX(4px); }
+    95% { transform: translateX(-4px); }
+    100% { transform: translateX(0); }
+  }
+
+  .anim-fill .c1 { animation: color1 3s infinite; }
+  .anim-fill .c2 { animation: color2 3s infinite; }
+  .anim-fill .c3 { animation: color3 3s infinite; }
+  @keyframes color1 { 0%, 20% { background: #e2e8f0; } 30%, 100% { background: #ec4899; } }
+  @keyframes color2 { 0%, 40% { background: #e2e8f0; } 50%, 100% { background: #3b82f6; } }
+  @keyframes color3 { 0%, 60% { background: #e2e8f0; } 70%, 100% { background: #10b981; } }
+
+  /* --- Primary Button --- */
+  .primary-btn {
+    background: #fdc5fe;
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .primary-btn:hover { background: #f692bf; }
 
     @media (max-width: 960px) {
       .app-shell {

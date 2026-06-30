@@ -24,20 +24,29 @@ export class AppearingSection {
         });
 
         /** @type {Vector2} */
-        this.RangeStart = new Vector2(Min.x - 1, Min.y - 1);
+        this.RangeStart = Min;
         
         /** @type {Vector2} */
-        this.RangeEnd = new Vector2(Max.x + 1, Max.y + 1);
+        this.RangeEnd = Max;
     }
 
     /**
      * @param {number} x 
      * @param {number} y
+     * @param {boolean} padding
      * @returns {boolean}
      */
-    isWithinBounds(x, y) {
-        return x >= this.RangeStart.x && x <= this.RangeEnd.x &&
-               y >= this.RangeStart.y && y <= this.RangeEnd.y;
+    isWithinBounds(x, y, padding) {
+        /** @type {Vector2} */
+        let start = this.RangeStart;
+        /** @type {Vector2} */
+        let end = this.RangeEnd;
+        if (padding) {
+            start = new Vector2(this.RangeStart.x - 1, this.RangeStart.y - 1);
+            end = new Vector2(this.RangeEnd.x + 1, this.RangeEnd.y + 1);
+        }
+        return x >= start.x && x <= end.x &&
+               y >= start.y && y <= end.y;
     }
 
     /**
