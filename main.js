@@ -4,6 +4,10 @@ import { getCellsInLine } from './utils.js';
 import { GridCell } from './GridCell.js';
 import { AppearingSection } from './AppearingSection.js';
 import { WordLine } from './WordLine.js';
+import { GameModes } from './GameModes.js';
+
+/** @type {import('./GameModes.js').GameModeConfig} */
+let currentMode = GameModes.CLASSIC;
 
 /** @type {HTMLElement | null} */
 const gridWrapper = document.getElementById('grid-scroll-area');
@@ -137,18 +141,18 @@ function updateOpacities() {
     /**@type {GridCell[]} */
     const litCells = [];
     
-    // 1. Gather every cell
+    // Gather every cell
     gameState.forEach(cell => {
         if (!cell.isHidden) {
             litCells.push(cell);
         }
     });
 
-    // 2. Configure the light falloff for the ghost cells
+    // Configure the light falloff for the ghost cells
     const maxLightDistance = 5;  // How many squares away before it hits maximum darkness
     const darkestOpacity = 0.05; // The base opacity for far-away ghosts
 
-    // 3. Calculate distance ONLY for the hidden cells
+    // Calculate distance ONLY for the lit cells
     gameState.forEach(cell => {
         // RULE 1: If it's already found, OR if it's an active playable square, it's 100% visible.
         if (cell.isFound || !cell.isHidden) {
@@ -169,7 +173,7 @@ function updateOpacities() {
             shortestDistance = Math.min(shortestDistance, distance);
         });
 
-        // 4. Map that distance to the ghost's opacity
+        // Map that distance to the ghost's opacity
         if (shortestDistance >= maxLightDistance) {
             cell.opacity = darkestOpacity;
         } else {
@@ -512,7 +516,8 @@ gridWrapper.addEventListener('pointerup', (event) => {
         for (const key of currentSelectionPath) {
             const cellData = gameState.get(key);
             if (cellData) {
-                if (cellData.domElement && cellData.domElement.classList.contains('found')) {
+                // THE RULE CHECK: If the mode DOES NOT allow reuse, and the cell is found, break the path!
+                if (!currentMode.allowReuse && cellData.domElement && cellData.domElement.classList.contains('found')) {
                     clearPath();
                     selectedWord = ""; 
                     break;
@@ -599,6 +604,39 @@ gridWrapper.addEventListener('pointercancel', () => {
 });
 
 
+// --- Game Reset & Mode Switching ---
+const modeSelector = /** @type {HTMLSelectElement | null} */ (document.getElementById('mode-selector'));
+
+/**
+ * Wipes the board and restarts the level based on the current mode
+ * @returns {void}
+ */
+function resetGame() {
+    // 1. Wipe all existing data
+    gameState.clear();
+    AppearingSections.length = 0;
+    foundLines.length = 0;
+    totalScore = 0;
+    if (scoreDisplay) scoreDisplay.textContent = "0";
+    
+    // 2. Reset the target words
+    wordsRemaining = [...gridData.words];
+    
+    // 3. Rebuild the level
+    generateLevelData();
+    renderAllCells();
+    updateCameraTransform();
+}
+
+if (modeSelector) {
+    modeSelector.addEventListener('change', (e) => {
+        const target = /** @type {HTMLSelectElement} */ (e.target);
+        const selectedValue = target.value;
+        currentMode = GameModes[selectedValue];
+        console.log(`Switched to: ${currentMode.name}`);
+        resetGame();
+    });
+}
 
 function initializeGame() {
     generateLevelData();

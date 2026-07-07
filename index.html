@@ -17,9 +17,21 @@
           <p id="gameplay-title" style="margin: 0; font-size: 1rem; font-weight: 700;">Gameplay</p>
           <p style="margin: 4px 0 0; color: #475569; font-size: 0.92rem;">Use the mouse wheel to zoom around the cursor. Click and drag to pan the grid.</p>
         </div>
-        <div style="text-align: right;">
-          <p style="margin: 0; font-size: 0.92rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Points</p>
-          <p id="score-display" style="margin: 0; font-size: 2rem; font-weight: 800; color: #ec4899;">0</p>
+
+        <div style="display: flex; gap: 24px; text-align: right;">
+          <div>
+             <p style="margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Game Mode</p>
+             <select id="mode-selector" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e293b; background: white; cursor: pointer;">
+                <option value="CLASSIC">Classic</option>
+                <option value="OVERLAP">Overlap (Reuse)</option>
+                <option value="BLITZ">60s Blitz</option>
+                <option value="PRECISION">Precision</option>
+             </select>
+          </div>
+            <div style="text-align: right;">
+                <p style="margin: 0; font-size: 0.92rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Points</p>
+                <p id="score-display" style="margin: 0; font-size: 2rem; font-weight: 800; color: #ec4899;">0</p>
+            </div>
         </div>
       </div>
       <div class="grid-wrapper" id="grid-scroll-area">
