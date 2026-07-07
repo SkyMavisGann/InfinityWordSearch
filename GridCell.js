@@ -18,6 +18,12 @@ export class GridCell {
         
         /** @type {boolean} */
         this.isFound = false;
+
+        /** @type {boolean} */
+        this.isHidden = false;
+
+        /** @type {number} */
+        this.opacity = 1.0;
     }
 
     /**
@@ -34,8 +40,14 @@ export class GridCell {
         btn.dataset.x = String(this.x);
         btn.dataset.y = String(this.y);
 
+
+        btn.style.opacity = String(this.opacity);
         if (this.isFound) {
             btn.classList.add('found');
+        }
+
+        if (this.isHidden) {
+            btn.classList.add('hidden-cell');
         }
         
         this.domElement = btn;

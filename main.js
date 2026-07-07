@@ -131,8 +131,62 @@ function calculateWordPoints(pathCoordinates) {
     // Return the points (using Math.max just to ensure 1-letter glitches don't award negative points)
     return Math.max(0, points);
 }
+
+// --- Fog of War Logic ---
+function updateOpacities() {
+    /**@type {GridCell[]} */
+    const litCells = [];
+    
+    // 1. Gather every cell
+    gameState.forEach(cell => {
+        if (!cell.isHidden) {
+            litCells.push(cell);
+        }
+    });
+
+    // 2. Configure the light falloff for the ghost cells
+    const maxLightDistance = 5;  // How many squares away before it hits maximum darkness
+    const darkestOpacity = 0.05; // The base opacity for far-away ghosts
+
+    // 3. Calculate distance ONLY for the hidden cells
+    gameState.forEach(cell => {
+        // RULE 1: If it's already found, OR if it's an active playable square, it's 100% visible.
+        if (cell.isFound || !cell.isHidden) {
+            cell.opacity = 1.0;
+            return; // Skip the rest of the math for this square!
+        }
+
+        // RULE 2: If the game just started and nothing is found yet, keep all ghosts at minimum brightness
+        if (litCells.length === 0) {
+            cell.opacity = darkestOpacity;
+            return;
+        }
+
+        // RULE 3: For hidden cells, find the closest found letter
+        let shortestDistance = Infinity;
+        litCells.forEach(found => {
+            const distance = Math.hypot(cell.x - found.x, cell.y - found.y);
+            shortestDistance = Math.min(shortestDistance, distance);
+        });
+
+        // 4. Map that distance to the ghost's opacity
+        if (shortestDistance >= maxLightDistance) {
+            cell.opacity = darkestOpacity;
+        } else {
+            // Creates a linear fade from 1.0 down to 0.15 based on distance
+            const fadeRange = 1.0 - darkestOpacity;
+            const dropPerStep = fadeRange / maxLightDistance;
+            
+            // Apply the fade, capping it at 1.0 max just to be safe
+            cell.opacity = Math.min(1.0, 1.0 - (shortestDistance * dropPerStep));
+        }
+    });
+}
 function renderAllCells() {
     if (!gridContainer) return;
+
+    updateOpacities();
+
     gridContainer.innerHTML = '';
 
     foundLines.forEach(line => {
@@ -218,7 +272,7 @@ function generateLevelData() {
         new GridCell(7, 0, "A"),
         new GridCell(7, 2, "L")
     ];
-    AppearingSections.push(new AppearingSection(section1Cells));
+    AppearingSections.push(new AppearingSection(section1Cells, gameState));
 
     // SECTION 2: Adds "GHT" to STARLI + reveals "GHOST" and "HAT"
     // Triggered by finding SAIL in Section 1
@@ -235,7 +289,7 @@ function generateLevelData() {
         new GridCell(9, 2, "A"),
         new GridCell(9, 3, "T")
     ];
-    AppearingSections.push(new AppearingSection(section2Cells));
+    AppearingSections.push(new AppearingSection(section2Cells, gameState));
 
     // SECTION 3: Adds "MUSIC", "MUSE", and another "SUN" (Expands left)
     // Triggered by finding COMETS, CRATER, or COSMIC at (0,0)
@@ -251,7 +305,7 @@ function generateLevelData() {
         new GridCell(-2, 1, "U"),
         new GridCell(-2, 2, "N")
     ];
-    AppearingSections.push(new AppearingSection(section3Cells));
+    AppearingSections.push(new AppearingSection(section3Cells, gameState));
 
     // SECTION 4: Adds "RADIANT", "ANT", and "DIAL" (Expands downwards)
     // Triggered by finding RADAR at (4,5)
@@ -270,7 +324,7 @@ function generateLevelData() {
         new GridCell(7, 7, "L"),
         new GridCell(8, 7, "S")
     ];
-    AppearingSections.push(new AppearingSection(section4Cells));
+    AppearingSections.push(new AppearingSection(section4Cells, gameState));
 
     if (wordList) {
         wordList.innerHTML = '';
@@ -543,6 +597,8 @@ gridWrapper.addEventListener('pointercancel', () => {
     isDragging = false;
     document.body.classList.remove('is-dragging');
 });
+
+
 
 function initializeGame() {
     generateLevelData();

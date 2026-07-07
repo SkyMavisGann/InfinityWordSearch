@@ -4,9 +4,10 @@ import { GridCell } from './GridCell.js';
 
 export class AppearingSection {
     /**
-     * @param {GridCell[]} gridCells
+     * @param {import('./GridCell.js').GridCell[]} gridCells
+     * @param {Map<string, any>} gameState
      */
-    constructor(gridCells) {
+    constructor(gridCells, gameState) {
         /** @type {GridCell[]} */
         this.gridCells = gridCells;
         
@@ -21,7 +22,12 @@ export class AppearingSection {
             Min.y = Math.min(Min.y, cell.y);
             Max.x = Math.max(Max.x, cell.x);
             Max.y = Math.max(Max.y, cell.y);
+
+            cell.isHidden = true;
+            gameState.set(`${cell.x},${cell.y}`, cell);
         });
+
+        
 
         /** @type {Vector2} */
         this.RangeStart = Min;
@@ -58,8 +64,8 @@ export class AppearingSection {
         if (this.hasTriggered) return false; 
         this.hasTriggered = true;
 
-        this.gridCells.forEach(gridLetter => {
-            addLetter(gridLetter.x, gridLetter.y, gridLetter.letter, gameState, GridCell);
+        this.gridCells.forEach(cell => {
+            cell.isHidden = false; // Drop the ghost disguise!
         });
         
         return true;
