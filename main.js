@@ -457,15 +457,11 @@ gridWrapper.addEventListener('pointermove', (event) => {
             const mouseX = centerX - rect.left;
             const mouseY = centerY - rect.top;
             
-            const viewCenterX = rect.width / 2;
-            const viewCenterY = rect.height / 2;
-
-            const offsetX = mouseX - viewCenterX;
-            const offsetY = mouseY - viewCenterY;
+            
 
             const actualScaleRatio = nextScale / scale;
-            panX = offsetX - (offsetX - panX) * actualScaleRatio;
-            panY = offsetY - (offsetY - panY) * actualScaleRatio;
+            panX = mouseX - (mouseX - panX) * actualScaleRatio;
+            panY = mouseY - (mouseY - panY) * actualScaleRatio;
 
             scale = nextScale;
             updateCameraTransform();
