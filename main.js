@@ -34,6 +34,11 @@ let isDragging = false, isSelecting = false;
 /** @type {number} */ let startPanX = 0;
 /** @type {number} */ let startPanY = 0;
 
+/** @type {Map<number, PointerEvent>} */
+const activePointers = new Map();
+/** @type {number} */ 
+let prevPinchDistance = -1;
+
 /** @type {string[]} */
 let currentSelectionPath = [];
 
@@ -333,6 +338,20 @@ gridWrapper.addEventListener('wheel', (event) => {
 gridWrapper.addEventListener('pointerdown', (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
 
+    //add fingers to activepointers
+    activePointers.set(event.pointerId, event);
+    gridWrapper.setPointerCapture(event.pointerId);
+    if (activePointers.size === 2) {
+        isDragging = false;
+        if (isSelecting) {
+            clearPath();
+            isSelecting = false;
+            gridWrapper.classList.remove('is-selecting');
+        }
+        document.body.classList.remove('is-dragging');
+        return; // Exit out of the normal click logic
+    }
+
     /** @type {HTMLElement | null} */
     const targetCell = /** @type {HTMLElement} */ (event.target).closest('.grid-cell');
 
@@ -353,6 +372,53 @@ gridWrapper.addEventListener('pointerdown', (event) => {
 });
 
 gridWrapper.addEventListener('pointermove', (event) => {
+    if (activePointers.has(event.pointerId)) {
+        activePointers.set(event.pointerId, event);
+    }
+
+    if (activePointers.size === 2) {
+        // Grab the two fingers
+        const pointers = Array.from(activePointers.values());
+        const p1 = pointers[0];
+        const p2 = pointers[1];
+
+        // Math.hypot calculates the distance between two points
+        const currentDistance = Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
+
+        if (prevPinchDistance > 0) {
+            // How much did the distance change since the last frame
+            const scaleRatio = currentDistance / prevPinchDistance;
+            const nextScale = Math.max(minScale, Math.min(maxScale, scale * scaleRatio));
+
+            // Find the exact midpoint between the two fingers
+            const centerX = (p1.clientX + p2.clientX) / 2;
+            const centerY = (p1.clientY + p2.clientY) / 2;
+
+            // The exact same camera math from your mouse wheel event
+            const rect = gridWrapper.getBoundingClientRect();
+            const mouseX = centerX - rect.left;
+            const mouseY = centerY - rect.top;
+            
+            const viewCenterX = rect.width / 2;
+            const viewCenterY = rect.height / 2;
+
+            const offsetX = mouseX - viewCenterX;
+            const offsetY = mouseY - viewCenterY;
+
+            const actualScaleRatio = nextScale / scale;
+            panX = offsetX - (offsetX - panX) * actualScaleRatio;
+            panY = offsetY - (offsetY - panY) * actualScaleRatio;
+
+            scale = nextScale;
+            updateCameraTransform();
+        }
+        
+        // Save this distance for the next frame
+        prevPinchDistance = currentDistance;
+        return; // Don't run the single-finger drag/select logic
+    }
+
+
     if (isDragging) {
         const deltaX = event.clientX - dragStartX;
         const deltaY = event.clientY - dragStartY;
