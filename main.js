@@ -68,140 +68,6 @@ const gridData = {
         'RADIANT', 'ANT', 'DIALS'
     ]
 };
-/** @type {string[]} */
-let wordsRemaining = [...gridData.words];
-
-/** @type {Map<string, GridCell>} */
-const gameState = new Map();
-
-/** @type {AppearingSection[]} */
-const AppearingSections = [];
-
-/** @type {WordLine[]} */
-const foundLines = [];
-
-// --- Functions ---
-function updateCameraTransform() {
-    if (gridContainer) {
-        gridContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-    }
-}
-
-function clearPath() {
-    currentSelectionPath.forEach(key => {
-        const cellData = gameState.get(key);
-        if (cellData && cellData.domElement) {
-            cellData.domElement.classList.remove('in-path');
-        }
-    });
-}
-
-/**
- * Calculates points based on word length and how many unique sections it spans
- * @param {string[]} pathCoordinates - Array of string keys (e.g., ["0,0", "1,0"])
- * @returns {number}
- */
-function calculateWordPoints(pathCoordinates) {
-    // A Set stores unique values. If we add "Section 1" five times, it only counts it once!
-    /**@type {Set<string>} */
-    const touchedSections = new Set();
-
-    pathCoordinates.forEach(key => {
-        const pos = keyToVector2(key);
-        let inAnyAppearingSection = false;
-
-        // Check if this specific letter falls inside any of our Appearing Sections
-        AppearingSections.forEach((section, index) => {
-            if (section.isWithinBounds(pos.x, pos.y, false)) {
-                touchedSections.add(`section_${index}`);
-                inAnyAppearingSection = true;
-            }
-        });
-
-        // If it wasn't in ANY appearing section bounds, it must be in the Base Grid
-        if (!inAnyAppearingSection) {
-            touchedSections.add('base_grid');
-        }
-    });
-
-    // The span is simply how many unique zones are in our Set
-    const span = touchedSections.size;
-    
-    // Exact formula: ((wordcount - 2) * span)
-    const points = (pathCoordinates.length - 2) * span;
-
-    console.log(`Word Length: ${pathCoordinates.length} | Span: ${span} sections | Points: ${points}`);
-    
-    // Return the points (using Math.max just to ensure 1-letter glitches don't award negative points)
-    return Math.max(0, points);
-}
-
-// --- Fog of War Logic ---
-function updateOpacities() {
-    /**@type {GridCell[]} */
-    const litCells = [];
-    
-    // Gather every cell
-    gameState.forEach(cell => {
-        if (!cell.isHidden) {
-            litCells.push(cell);
-        }
-    });
-
-    // Configure the light falloff for the ghost cells
-    const maxLightDistance = 5;  // How many squares away before it hits maximum darkness
-    const darkestOpacity = 0.05; // The base opacity for far-away ghosts
-
-    // Calculate distance ONLY for the lit cells
-    gameState.forEach(cell => {
-        // RULE 1: If it's already found, OR if it's an active playable square, it's 100% visible.
-        if (cell.isFound || !cell.isHidden) {
-            cell.opacity = 1.0;
-            return; // Skip the rest of the math for this square!
-        }
-
-        // RULE 2: If the game just started and nothing is found yet, keep all ghosts at minimum brightness
-        if (litCells.length === 0) {
-            cell.opacity = darkestOpacity;
-            return;
-        }
-
-        // RULE 3: For hidden cells, find the closest found letter
-        let shortestDistance = Infinity;
-        litCells.forEach(found => {
-            const distance = Math.hypot(cell.x - found.x, cell.y - found.y);
-            shortestDistance = Math.min(shortestDistance, distance);
-        });
-
-        // Map that distance to the ghost's opacity
-        if (shortestDistance >= maxLightDistance) {
-            cell.opacity = darkestOpacity;
-        } else {
-            // Creates a linear fade from 1.0 down to 0.15 based on distance
-            const fadeRange = 1.0 - darkestOpacity;
-            const dropPerStep = fadeRange / maxLightDistance;
-            
-            // Apply the fade, capping it at 1.0 max just to be safe
-            cell.opacity = Math.min(1.0, 1.0 - (shortestDistance * dropPerStep));
-        }
-    });
-}
-function renderAllCells() {
-    if (!gridContainer) return;
-
-    updateOpacities();
-
-    gridContainer.innerHTML = '';
-
-    foundLines.forEach(line => {
-        gridContainer.appendChild(line.render());
-    });
-
-    gameState.forEach((cellData) => {
-        const element = cellData.render();
-        gridContainer.appendChild(element);
-    });
-}
 
 function generateLevelData() {
     // --- MAIN GRID (6x6 Base) ---
@@ -340,6 +206,142 @@ function generateLevelData() {
     }
 }
 
+
+/** @type {string[]} */
+let wordsRemaining = [...gridData.words];
+
+/** @type {Map<string, GridCell>} */
+const gameState = new Map();
+
+/** @type {AppearingSection[]} */
+const AppearingSections = [];
+
+/** @type {WordLine[]} */
+const foundLines = [];
+
+// --- Functions ---
+function updateCameraTransform() {
+    if (gridContainer) {
+        gridContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    }
+}
+
+function clearPath() {
+    currentSelectionPath.forEach(key => {
+        const cellData = gameState.get(key);
+        if (cellData && cellData.domElement) {
+            cellData.domElement.classList.remove('in-path');
+        }
+    });
+}
+
+/**
+ * Calculates points based on word length and how many unique sections it spans
+ * @param {string[]} pathCoordinates - Array of string keys (e.g., ["0,0", "1,0"])
+ * @returns {number}
+ */
+function calculateWordPoints(pathCoordinates) {
+    // A Set stores unique values. If we add "Section 1" five times, it only counts it once!
+    /**@type {Set<string>} */
+    const touchedSections = new Set();
+
+    pathCoordinates.forEach(key => {
+        const pos = keyToVector2(key);
+        let inAnyAppearingSection = false;
+
+        // Check if this specific letter falls inside any of our Appearing Sections
+        AppearingSections.forEach((section, index) => {
+            if (section.isWithinBounds(pos.x, pos.y, false)) {
+                touchedSections.add(`section_${index}`);
+                inAnyAppearingSection = true;
+            }
+        });
+
+        // If it wasn't in ANY appearing section bounds, it must be in the Base Grid
+        if (!inAnyAppearingSection) {
+            touchedSections.add('base_grid');
+        }
+    });
+
+    // The span is simply how many unique zones are in our Set
+    const span = touchedSections.size;
+    
+    // Exact formula: ((wordcount - 2) * span)
+    const points = (pathCoordinates.length - 2) * span;
+
+    console.log(`Word Length: ${pathCoordinates.length} | Span: ${span} sections | Points: ${points}`);
+    
+    // Return the points (using Math.max just to ensure 1-letter glitches don't award negative points)
+    return Math.max(0, points);
+}
+
+// --- Fog of War Logic ---
+function updateOpacities() {
+    /**@type {GridCell[]} */
+    const litCells = [];
+    
+    // Gather every cell
+    gameState.forEach(cell => {
+        if (!cell.isHidden) {
+            litCells.push(cell);
+        }
+    });
+
+    // Configure the light falloff for the ghost cells
+    const maxLightDistance = 5;  // How many squares away before it hits maximum darkness
+    const darkestOpacity = 0.05; // The base opacity for far-away ghosts
+
+    // Calculate distance ONLY for the lit cells
+    gameState.forEach(cell => {
+        // RULE 1: If it's already found, OR if it's an active playable square, it's 100% visible.
+        if (cell.isFound || !cell.isHidden) {
+            cell.opacity = 1.0;
+            return; // Skip the rest of the math for this square!
+        }
+
+        // RULE 2: If the game just started and nothing is found yet, keep all ghosts at minimum brightness
+        if (litCells.length === 0) {
+            cell.opacity = darkestOpacity;
+            return;
+        }
+
+        // RULE 3: For hidden cells, find the closest found letter
+        let shortestDistance = Infinity;
+        litCells.forEach(found => {
+            const distance = Math.hypot(cell.x - found.x, cell.y - found.y);
+            shortestDistance = Math.min(shortestDistance, distance);
+        });
+
+        // Map that distance to the ghost's opacity
+        if (shortestDistance >= maxLightDistance) {
+            cell.opacity = darkestOpacity;
+        } else {
+            // Creates a linear fade from 1.0 down to 0.15 based on distance
+            const fadeRange = 1.0 - darkestOpacity;
+            const dropPerStep = fadeRange / maxLightDistance;
+            
+            // Apply the fade, capping it at 1.0 max just to be safe
+            cell.opacity = Math.min(1.0, 1.0 - (shortestDistance * dropPerStep));
+        }
+    });
+}
+function renderAllCells() {
+    if (!gridContainer) return;
+
+    updateOpacities();
+
+    gridContainer.innerHTML = '';
+
+    foundLines.forEach(line => {
+        gridContainer.appendChild(line.render());
+    });
+
+    gameState.forEach((cellData) => {
+        const element = cellData.render();
+        gridContainer.appendChild(element);
+    });
+}
+
 // --- Event Listeners ---
 // --- Help Modal Logic ---
 const helpBtn = document.getElementById('help-btn');
@@ -399,6 +401,7 @@ gridWrapper.addEventListener('pointerdown', (event) => {
     //add fingers to activepointers
     activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     gridWrapper.setPointerCapture(event.pointerId);
+
     if (activePointers.size === 2) {
         isDragging = false;
         if (isSelecting) {
@@ -506,6 +509,14 @@ gridWrapper.addEventListener('pointermove', (event) => {
 });
 
 gridWrapper.addEventListener('pointerup', (event) => {
+
+    if (activePointers.size < 2) {
+        prevPinchDistance = -1;
+    }
+
+    if (gridWrapper.hasPointerCapture(event.pointerId)) {
+        gridWrapper.releasePointerCapture(event.pointerId);
+    }
     if (isSelecting) {
         let selectedWord = "";
 
@@ -594,7 +605,13 @@ gridWrapper.addEventListener('pointerup', (event) => {
     }
 });
 
-gridWrapper.addEventListener('pointercancel', () => {
+gridWrapper.addEventListener('pointercancel', (event) => {
+    activePointers.delete(event.pointerId);
+        if (activePointers.size < 2) {
+            prevPinchDistance = -1;
+        }
+    
+
     isDragging = false;
     document.body.classList.remove('is-dragging');
 });
