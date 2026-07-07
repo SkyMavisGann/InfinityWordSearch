@@ -38,7 +38,7 @@ let isDragging = false, isSelecting = false;
 /** @type {number} */ let startPanX = 0;
 /** @type {number} */ let startPanY = 0;
 
-/** @type {Map<number, PointerEvent>} */
+/** @type {Map<number, {x: number, y: number}>} */
 const activePointers = new Map();
 /** @type {number} */ 
 let prevPinchDistance = -1;
@@ -397,7 +397,7 @@ gridWrapper.addEventListener('pointerdown', (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
 
     //add fingers to activepointers
-    activePointers.set(event.pointerId, event);
+    activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     gridWrapper.setPointerCapture(event.pointerId);
     if (activePointers.size === 2) {
         isDragging = false;
@@ -431,7 +431,7 @@ gridWrapper.addEventListener('pointerdown', (event) => {
 
 gridWrapper.addEventListener('pointermove', (event) => {
     if (activePointers.has(event.pointerId)) {
-        activePointers.set(event.pointerId, event);
+        activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     }
 
     if (activePointers.size === 2) {
@@ -441,7 +441,7 @@ gridWrapper.addEventListener('pointermove', (event) => {
         const p2 = pointers[1];
 
         // Math.hypot calculates the distance between two points
-        const currentDistance = Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
+        const currentDistance = Math.hypot(p1.x - p2.x, p1.y - p2.y);
 
         if (prevPinchDistance > 0) {
             // How much did the distance change since the last frame
@@ -449,8 +449,8 @@ gridWrapper.addEventListener('pointermove', (event) => {
             const nextScale = Math.max(minScale, Math.min(maxScale, scale * scaleRatio));
 
             // Find the exact midpoint between the two fingers
-            const centerX = (p1.clientX + p2.clientX) / 2;
-            const centerY = (p1.clientY + p2.clientY) / 2;
+            const centerX = (p1.x + p2.x) / 2;
+            const centerY = (p1.y + p2.y) / 2;
 
             // The exact same camera math from your mouse wheel event
             const rect = gridWrapper.getBoundingClientRect();
