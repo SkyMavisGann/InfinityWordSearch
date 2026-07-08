@@ -510,18 +510,17 @@ gridWrapper.addEventListener('pointermove', (event) => {
 
 window.addEventListener('pointerup', (event) => {
 
+    activePointers.delete(event.pointerId);
     if (activePointers.size < 2) {
         prevPinchDistance = -1;
     }
-
-
 
     try {
         if (gridWrapper.hasPointerCapture(event.pointerId)) {
             gridWrapper.releasePointerCapture(event.pointerId);
         }
     } catch (e) {}
-    
+
     if (isSelecting) {
         let selectedWord = "";
 
