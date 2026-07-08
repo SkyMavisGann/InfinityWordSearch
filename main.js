@@ -508,15 +508,20 @@ gridWrapper.addEventListener('pointermove', (event) => {
     }
 });
 
-gridWrapper.addEventListener('pointerup', (event) => {
+window.addEventListener('pointerup', (event) => {
 
     if (activePointers.size < 2) {
         prevPinchDistance = -1;
     }
 
-    if (gridWrapper.hasPointerCapture(event.pointerId)) {
-        gridWrapper.releasePointerCapture(event.pointerId);
-    }
+
+
+    try {
+        if (gridWrapper.hasPointerCapture(event.pointerId)) {
+            gridWrapper.releasePointerCapture(event.pointerId);
+        }
+    } catch (e) {}
+    
     if (isSelecting) {
         let selectedWord = "";
 
@@ -605,7 +610,7 @@ gridWrapper.addEventListener('pointerup', (event) => {
     }
 });
 
-gridWrapper.addEventListener('pointercancel', (event) => {
+window.addEventListener('pointercancel', (event) => {
     activePointers.delete(event.pointerId);
         if (activePointers.size < 2) {
             prevPinchDistance = -1;
