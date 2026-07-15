@@ -28,15 +28,25 @@
                 <option value="PRECISION">Precision</option>
              </select>
           </div>
+            <div id="timer-container" style="display: none;">
+              <p style="margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Time</p>
+              <p id="timer-display" style="margin: 0; font-size: 1.8rem; font-weight: 800; color: #ef4444; line-height: 1;">1:00</p>
+            </div>
             <div style="text-align: right;">
-                <p style="margin: 0; font-size: 0.92rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Points</p>
-                <p id="score-display" style="margin: 0; font-size: 2rem; font-weight: 800; color: #ec4899;">0</p>
+              <p style="margin: 0; font-size: 0.92rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Points</p>
+              <p id="score-display" style="margin: 0; font-size: 2rem; font-weight: 800; color: #ec4899;">0</p>
             </div>
         </div>
       </div>
       <div class="grid-wrapper" id="grid-scroll-area">
         <div class="grid-container" id="wordsearch-grid" data-scale="1">
           <!-- Will fill with grid -->
+        </div>
+
+        <div id="game-over-modal" style="display: none; position: absolute; inset: 0; background: rgba(241, 245, 249, 0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+            <h2 id="game-over-title" style="margin: 0 0 8px; font-size: 3rem; font-weight: 900; color: #0f172a;">Time's Up!</h2>
+            <p id="game-over-score" style="margin: 0 0 24px; font-size: 1.2rem; color: #475569; font-weight: bold;">Final Score: 0</p>
+            <button id="play-again-btn" style="padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Play Again</button>
         </div>
       </div>
     </section>
