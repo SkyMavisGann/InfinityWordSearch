@@ -5,8 +5,8 @@ import { GridCell } from './GridCell.js';
 import { AppearingSection } from './AppearingSection.js';
 import { WordLine } from './WordLine.js';
 import { GameModes } from './GameModes.js';
-import { gridData } from './static/Level1.js';
-import { generateLevelData } from './static/Level1.js';
+import { gridData } from './static/Level4.js';
+import { generateLevelData } from './static/Level4.js';
 
 /** @type {import('./GameModes.js').GameModeConfig} */
 let currentMode = GameModes.CLASSIC;
