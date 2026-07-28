@@ -24,14 +24,20 @@
              <select id="mode-selector" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e293b; background: white; cursor: pointer;">
                 <option value="CLASSIC">Classic</option>
                 <option value="OVERLAP">Overlap (Reuse)</option>
-                <option value="BLITZ">60s Blitz</option>
-                <option value="PRECISION">Precision</option>
+                <option value="BLITZ">Timed</option>
+                <option value="PRECISION">Letter Count</option>
              </select>
           </div>
             <div id="timer-container" style="display: none;">
               <p style="margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Time</p>
               <p id="timer-display" style="margin: 0; font-size: 1.8rem; font-weight: 800; color: #ef4444; line-height: 1;">1:00</p>
             </div>
+
+            <div id="letters-container" style="display: none;">
+              <p style="margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Letters Left</p>
+              <p id="letters-display" style="margin: 0; font-size: 1.8rem; font-weight: 800; color: #8b5cf6; line-height: 1;">50</p>
+            </div>
+
             <div style="text-align: right;">
               <p style="margin: 0; font-size: 0.92rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Points</p>
               <p id="score-display" style="margin: 0; font-size: 2rem; font-weight: 800; color: #ec4899;">0</p>

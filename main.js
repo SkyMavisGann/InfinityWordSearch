@@ -5,8 +5,8 @@ import { GridCell } from './GridCell.js';
 import { AppearingSection } from './AppearingSection.js';
 import { WordLine } from './WordLine.js';
 import { GameModes } from './GameModes.js';
-import { gridData } from './static/Level2.js';
-import { generateLevelData } from './static/Level2.js';
+import { gridData } from './static/Level1.js';
+import { generateLevelData } from './static/Level1.js';
 
 /** @type {import('./GameModes.js').GameModeConfig} */
 let currentMode = GameModes.CLASSIC;
@@ -65,6 +65,7 @@ const foundLines = [];
 
 let isGameOver = false;
 let timeRemaining = 0;
+let lettersRemaining = 0;
 /** @type {number | null} */
 let timerInterval = null;
 
@@ -74,6 +75,9 @@ const gameOverModal = document.getElementById('game-over-modal');
 const gameOverTitle = document.getElementById('game-over-title');
 const gameOverScore = document.getElementById('game-over-score');
 const playAgainBtn = document.getElementById('play-again-btn');
+
+const lettersContainer = document.getElementById('letters-container');
+const lettersDisplay = document.getElementById('letters-display');
 
 if (playAgainBtn) {
     playAgainBtn.addEventListener('click', () => {
@@ -93,19 +97,111 @@ function formatTime(seconds) {
 
 /**
  * Puts time into a readable format
- * @param {boolean} won 
+ * @param {string} customText
  */
-function triggerGameOver(won) {
+function triggerGameOver(customText = "Game Over!") {
     isGameOver = true;
     if (timerInterval) clearInterval(timerInterval);
     
     if (gameOverModal && gameOverTitle && gameOverScore) {
         gameOverModal.style.display = 'flex';
-        gameOverTitle.textContent = won ? "System Breached!" : "Time's Up!";
-        gameOverTitle.style.color = won ? "#10b981" : "#ef4444"; // Green for win, Red for lose
+        
+
+        gameOverTitle.textContent = customText;
+        gameOverTitle.style.color = "#ef4444"; // Red for lose
+
+        
         gameOverScore.textContent = `Final Score: ${totalScore}`;
     }
 }
+
+/** @type {Map<string, string[]>} */
+const wordPathsMap = new Map();
+/** @type {string[]} */
+let impossibleWords = [];
+
+/**
+ * Scans the initial grid to find the single correct path for every word.
+ */
+function calculateWordPaths() {
+    wordPathsMap.clear();
+    impossibleWords = [];
+    
+    const dirs = [
+        [0, -1], [1, -1], [1, 0], [1, 1],
+        [0, 1], [-1, 1], [-1, 0], [-1, -1]
+    ];
+
+    if (!gridData || !gridData.words) return;
+
+    gridData.words.forEach(word => {
+        let foundPath = null;
+        
+        // Scan the entire universe of cells (including hidden ones)
+        for (let [key, cell] of gameState.entries()) {
+            if (cell.letter === word[0]) {
+                const [sx, sy] = key.split(',').map(Number);
+                
+                for (let [dx, dy] of dirs) {
+                    const path = [];
+                    let valid = true;
+                    
+                    for (let i = 0; i < word.length; i++) {
+                        const nx = sx + dx * i;
+                        const ny = sy + dy * i;
+                        const nkey = `${nx},${ny}`;
+                        const nextCell = gameState.get(nkey);
+                        
+                        if (nextCell && nextCell.letter === word[i]) {
+                            path.push(nkey);
+                        } else {
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if (valid) {
+                        foundPath = path;
+                        break; // Stop checking directions
+                    }
+                }
+            }
+            if (foundPath) break; // Stop scanning the grid for this word
+        }
+        
+        if (foundPath) {
+            wordPathsMap.set(word, foundPath);
+        }
+    });
+}
+
+/**
+ * Checks if the single unique path for any remaining word is blocked.
+ */
+function checkImpossibleWords() {
+    if (currentMode.allowReuse) return; 
+
+    for (let i = wordsRemaining.length - 1; i >= 0; i--) {
+        const word = wordsRemaining[i];
+        const path = wordPathsMap.get(word);
+        
+        if (!path) continue;
+
+        // Since there is only one path, if ANY cell in it is found, the word is impossible
+
+        const isBlocked = path.some(key => {
+            const cell = gameState.get(key);
+            return cell && cell.isFound;
+        });
+
+
+        if (isBlocked) {
+            wordsRemaining.splice(i, 1);
+            impossibleWords.push(word);
+        }
+    }
+    updateWordListUI();
+}
+
 
 // --- Functions ---
 function updateCameraTransform() {
@@ -439,6 +535,15 @@ window.addEventListener('pointerup', (event) => {
                 const pointsEarned = calculateWordPoints(currentSelectionPath);
                 totalScore += pointsEarned;
                 
+                if (currentMode.maxLetters !== null) {
+                    lettersRemaining -= matchedWord.length;
+                    if (lettersDisplay) {
+                        lettersDisplay.textContent = Math.max(0, lettersRemaining).toString();
+                        lettersDisplay.style.transform = "scale(1.2)";
+                        setTimeout(() => lettersDisplay.style.transform = "scale(1)", 150);
+                    }
+                }
+
                 if (scoreDisplay) {
                     scoreDisplay.textContent = totalScore.toString();
                     
@@ -478,15 +583,27 @@ window.addEventListener('pointerup', (event) => {
 
                 if (needsRender) renderAllCells();
 
-                const listItems = document.querySelectorAll('#word-list li');
-                listItems.forEach(li => {
-                    if (li.textContent === matchedWord) li.classList.add('crossed-off');
-                });
+                // const listItems = document.querySelectorAll('#word-list li');
+                // listItems.forEach(li => {
+                //     if (li.textContent === matchedWord) li.classList.add('crossed-off');
+                // });
 
                 wordsRemaining = wordsRemaining.filter(w => w !== matchedWord);
 
+                checkImpossibleWords();
+                
                 if (wordsRemaining.length === 0) {
-                    triggerGameOver(true);
+                    if (impossibleWords.length > 0) {
+                        triggerGameOver("Found all Words");
+                    }
+                    // If they found the last word but went into negative debt
+                    else if (currentMode.maxLetters !== null && lettersRemaining < 0) {
+                        triggerGameOver("Out of Letters!"); 
+                    } else {
+                        triggerGameOver("Found all Words");
+                    }
+                } else if (currentMode.maxLetters !== null && lettersRemaining <= 0) {
+                    triggerGameOver("Out of Letters!");
                 }
 
                 if (wordsRemaining.length === 0) console.log("You found all the words!");
@@ -516,6 +633,30 @@ window.addEventListener('pointercancel', (event) => {
     document.body.classList.remove('is-dragging');
 });
 
+/**
+ * Redraws the word list UI based on the current state
+ */
+function updateWordListUI() {
+    const listContainer = document.getElementById('word-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+    
+    gridData.words.forEach(word => {
+        // 1. If the word is impossible, skip it entirely (vanishes from list)
+        if (impossibleWords.includes(word)) return;
+        
+        const li = document.createElement('li');
+        li.textContent = word;
+        
+        // 2. If it's NOT in wordsRemaining (and not impossible), it must be found!
+        if (!wordsRemaining.includes(word)) {
+            li.classList.add('crossed-off');
+        }
+        
+        listContainer.appendChild(li);
+    });
+}
 
 // --- Game Reset & Mode Switching ---
 const modeSelector = /** @type {HTMLSelectElement | null} */ (document.getElementById('mode-selector'));
@@ -533,11 +674,14 @@ function resetGame() {
     AppearingSections.length = 0;
     foundLines.length = 0;
     totalScore = 0;
+    impossibleWords = [];
+
     if (scoreDisplay) scoreDisplay.textContent = "0";
     
-    // 2. Reset the target words
     wordsRemaining = [...gridData.words];
     
+    updateWordListUI();
+
     if (currentMode.timeLimit !== null && timerContainer && timerDisplay) {
         timerContainer.style.display = 'block';
         timeRemaining = currentMode.timeLimit;
@@ -549,15 +693,24 @@ function resetGame() {
             timerDisplay.textContent = formatTime(timeRemaining);
             
             if (timeRemaining <= 0) {
-                triggerGameOver(false); // Out of time!
+                triggerGameOver("Time's Up!"); // Out of time!
             }
         }, 1000);
     } else if (timerContainer) {
         timerContainer.style.display = 'none';
     }
+
+    if (currentMode.maxLetters !== null && lettersContainer && lettersDisplay) {
+        lettersContainer.style.display = 'block';
+        lettersRemaining = currentMode.maxLetters;
+        lettersDisplay.textContent = lettersRemaining.toString();
+    } else if (lettersContainer) {
+        lettersContainer.style.display = 'none';
+    }
     
     // 3. Rebuild the level
     generateLevelData();
+    calculateWordPaths();
     renderAllCells();
     updateCameraTransform();
 }
@@ -574,6 +727,7 @@ if (modeSelector) {
 
 function initializeGame() {
     generateLevelData();
+    calculateWordPaths();
     renderAllCells();
 }
 
