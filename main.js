@@ -79,6 +79,84 @@ const playAgainBtn = document.getElementById('play-again-btn');
 const lettersContainer = document.getElementById('letters-container');
 const lettersDisplay = document.getElementById('letters-display');
 
+
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+
+const iconExpand = `<svg viewBox="0 0 24 24" width="24" height="24" stroke="#1e293b" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>`;
+const iconCompress = `<svg viewBox="0 0 24 24" width="24" height="24" stroke="#1e293b" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>`;
+
+/** @param {Boolean} isFullscreen */
+function updateFullscreenIcon(isFullscreen) {
+    if (fullscreenBtn) {
+        fullscreenBtn.innerHTML = isFullscreen ? iconCompress : iconExpand;
+    }
+}
+if (fullscreenBtn && gridWrapper) {
+    fullscreenBtn.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+    });
+
+    fullscreenBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+    fullscreenBtn.addEventListener('touchstart', (e) => e.stopPropagation());
+    
+    fullscreenBtn.addEventListener('click', async () => {
+        // 1. Always handle our custom CSS fallback exit first
+        if (gridWrapper.classList.contains('pseudo-fullscreen')) {
+            gridWrapper.classList.remove('pseudo-fullscreen');
+            updateFullscreenIcon(false);
+            window.dispatchEvent(new Event('resize'));
+            return;
+        }
+
+        // Bracket notation bypasses strict TS errors for vendor prefixes safely
+        const isNativeFullscreen = !!(document.fullscreenElement || /**@type {any} */(document).webkitFullscreenElement);
+        
+        if (!isNativeFullscreen) {
+            // Attempt to enter native fullscreen
+            const requestFS = gridWrapper.requestFullscreen || /**@type {any} */ (gridWrapper).webkitRequestFullscreen;
+            
+            if (requestFS) {
+                try {
+                    // We await the request so we know exactly when it finishes (or fails)
+                    await requestFS.call(gridWrapper);
+                    // If we get here, native fullscreen worked! The 'fullscreenchange' event will update the icon.
+                } catch (err) {
+                    console.warn("Native fullscreen blocked. Using CSS fallback.");
+                    gridWrapper.classList.add('pseudo-fullscreen');
+                    updateFullscreenIcon(true);
+                    window.dispatchEvent(new Event('resize'));
+                }
+            } else {
+                // Browser doesn't support native fullscreen at all (e.g., old iOS Safari)
+                gridWrapper.classList.add('pseudo-fullscreen');
+                updateFullscreenIcon(true);
+                window.dispatchEvent(new Event('resize'));
+            }
+        } else {
+            // Attempt to exit native fullscreen
+            const exitFS = document.exitFullscreen || /**@type {any} */ (document).webkitExitFullscreen;
+            if (exitFS) {
+                try {
+                    await exitFS.call(document);
+                } catch (err) {
+                    console.warn("Failed to exit native fullscreen.");
+                }
+            }
+        }
+    });
+
+    // Event listeners for exiting via 'Esc' key or system swipe
+    document.addEventListener('fullscreenchange', () => {
+        updateFullscreenIcon(!!document.fullscreenElement);
+        window.dispatchEvent(new Event('resize'));
+    });
+
+    document.addEventListener('webkitfullscreenchange', () => {
+        updateFullscreenIcon(!!/**@type {any} */(document).webkitFullscreenElement);
+        window.dispatchEvent(new Event('resize'));
+    });
+}
 if (playAgainBtn) {
     playAgainBtn.addEventListener('click', () => {
         resetGame();
