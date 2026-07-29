@@ -572,6 +572,19 @@ window.addEventListener('pointerup', (event) => {
                         cellData.domElement.classList.remove('in-path');
                         cellData.domElement.classList.add('found');
                     }
+                    cellData.foundCount = (cellData.foundCount || 0) + 1;
+
+                    if (cellData.domElement) {
+                            cellData.domElement.classList.add('found'); // Ensure the base class is there
+                            
+                            // Apply the heat-map color directly to the live inline style
+                            const lightness = Math.max(15, 88 - ((cellData.foundCount - 1) * 15));
+                            const saturation = Math.max(30, 96.61 - ((cellData.foundCount - 1) * 30));
+                            cellData.domElement.style.backgroundColor = `hsl(298.95, ${saturation}%, ${lightness}%)`;
+                            cellData.domElement.style.color = "white";
+                        }
+                    
+
 
                     const pos = keyToVector2(key);
                     AppearingSections.forEach(section => {
@@ -590,7 +603,11 @@ window.addEventListener('pointerup', (event) => {
 
                 wordsRemaining = wordsRemaining.filter(w => w !== matchedWord);
 
-                checkImpossibleWords();
+                if (!currentMode.allowReuse) {
+                    checkImpossibleWords();
+                } else {
+                    updateWordListUI();
+                }
                 
                 if (wordsRemaining.length === 0) {
                     if (impossibleWords.length > 0) {
