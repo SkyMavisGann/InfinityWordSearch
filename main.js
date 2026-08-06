@@ -5,8 +5,8 @@ import { GridCell } from './GridCell.js';
 import { AppearingSection } from './AppearingSection.js';
 import { WordLine } from './WordLine.js';
 import { GameModes } from './GameModes.js';
-import { gridData } from './static/Level4.js';
-import { generateLevelData } from './static/Level4.js';
+import { gridData } from './static/CustomLevelMaker.js';
+import { generateLevelData } from './static/CustomLevelMaker.js';
 
 /** @type {import('./GameModes.js').GameModeConfig} */
 let currentMode = GameModes.CLASSIC;
@@ -17,6 +17,9 @@ const gridWrapper = document.getElementById('grid-scroll-area');
 const gridContainer = document.getElementById('wordsearch-grid');
 /** @type {HTMLElement | null} */
 export const wordList = document.getElementById('word-list');
+/** @type {HTMLElement | null} */
+export const mainWordList = document.getElementById('main-word-list');
+
 
 /** @type {HTMLElement | null} */
 const scoreDisplay = document.getElementById('score-display');
@@ -758,9 +761,9 @@ const modeSelector = /** @type {HTMLSelectElement | null} */ (document.getElemen
 
 /**
  * Wipes the board and restarts the level based on the current mode
- * @returns {void}
+ * @returns
  */
-function resetGame() {
+async function resetGame() {
     isGameOver = false;
     if (gameOverModal) gameOverModal.style.display = 'none';
     if (timerInterval) clearInterval(timerInterval);
@@ -773,7 +776,7 @@ function resetGame() {
 
     if (scoreDisplay) scoreDisplay.textContent = "0";
     
-    wordsRemaining = [...gridData.words];
+    wordsRemaining = [...gridData.words, ...gridData.mainWords];
     
     updateWordListUI();
 
@@ -804,7 +807,7 @@ function resetGame() {
     }
     
     // 3. Rebuild the level
-    generateLevelData();
+    await generateLevelData();
     calculateWordPaths();
     renderAllCells();
     updateCameraTransform();
@@ -820,8 +823,8 @@ if (modeSelector) {
     });
 }
 
-function initializeGame() {
-    generateLevelData();
+async function initializeGame() {
+    await generateLevelData();
     calculateWordPaths();
     renderAllCells();
 }
