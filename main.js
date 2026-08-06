@@ -735,25 +735,46 @@ window.addEventListener('pointercancel', (event) => {
  * Redraws the word list UI based on the current state
  */
 function updateWordListUI() {
-    const listContainer = document.getElementById('word-list');
-    if (!listContainer) return;
+    const mainListContainer = document.getElementById('main-word-list');
+    if (mainListContainer) {
+        mainListContainer.innerHTML = '';
 
-    listContainer.innerHTML = '';
-    
-    gridData.words.forEach(word => {
-        // 1. If the word is impossible, skip it entirely (vanishes from list)
-        if (impossibleWords.includes(word)) return;
         
-        const li = document.createElement('li');
-        li.textContent = word;
+        gridData.mainWords.forEach(word => {
+
+            const li = document.createElement('li');
+            li.textContent = word;
+            // 1. If the word is impossible, skip it entirely (vanishes from list)
+            if (impossibleWords.includes(word)) {
+                li.classList.add('main-impossible');
+            } else if (!wordsRemaining.includes(word)) {
+                li.classList.add('crossed-off');
+            }
+            mainListContainer.appendChild(li);
+        });
+    }
+
+    const listContainer = document.getElementById('word-list');
+    if (listContainer) {
         
-        // 2. If it's NOT in wordsRemaining (and not impossible), it must be found!
-        if (!wordsRemaining.includes(word)) {
-            li.classList.add('crossed-off');
-        }
+        listContainer.innerHTML = '';
         
-        listContainer.appendChild(li);
-    });
+        gridData.words.forEach(word => {
+            // 1. If the word is impossible, skip it entirely (vanishes from list)
+            if (impossibleWords.includes(word)) return;
+            
+            const li = document.createElement('li');
+            li.textContent = word;
+            
+            // 2. If it's NOT in wordsRemaining (and not impossible), it must be found!
+            if (!wordsRemaining.includes(word)) {
+                li.classList.add('crossed-off');
+            }
+            
+            listContainer.appendChild(li);
+        });
+    }
+
 }
 
 // --- Game Reset & Mode Switching ---
