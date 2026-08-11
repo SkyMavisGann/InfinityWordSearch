@@ -189,6 +189,7 @@
   transform: scale(0.7);
   box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
   z-index: 2; /* Ensures the letters sit ABOVE the line */
+  cursor: not-allowed !important;
 }
 
 .grid-cell.found.main, 
@@ -200,6 +201,7 @@
   transform: scale(0.9);
   box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
   z-index: 2; /* Ensures the letters sit ABOVE the line */
+  cursor: not-allowed !important;
 }
 
 .sidebar-container {
