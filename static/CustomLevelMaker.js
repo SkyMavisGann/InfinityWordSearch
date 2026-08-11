@@ -99,9 +99,7 @@ export async function generateLevelData() {
 
         // The top-left cell holds "row.col" for our 0,0 origin
         const metadata = rows[0][0]; 
-        const [originRow, originCol] = metadata.split('.').map(Number);
-        
-        console.log(`Decoding CSV Level... Origin is at Row ${originRow}, Col ${originCol}`);
+        const [originRow, originCol] = metadata.split('*').map(Number);
 
         const sectionsData = [];
 
@@ -140,23 +138,14 @@ export async function generateLevelData() {
         // Now that the whole CSV is read, convert our grouped arrays into real AppearingSections
         sectionsData.forEach((cellsArray, index) => {
             if (cellsArray && cellsArray.length > 0) {
-                console.log(`Creating Appearing Section ${index + 1} with ${cellsArray.length} cells.`);
+
                 AppearingSections.push(new AppearingSection(cellsArray, gameState));
             }
         });
 
-        console.log("CSV Level successfully decoded and loaded!");
     } catch (error) {
         console.error("Error loading the custom CSV level:", error);
     }
 
-    // UI Updates
-    if (wordList) {
-        wordList.innerHTML = '';
-        gridData.words.forEach(word => {
-            const li = document.createElement('li');
-            li.textContent = word;
-            wordList.appendChild(li);
-        });
-    }
+    
 }

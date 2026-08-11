@@ -1,153 +1,285 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Infinity Word Search</title>
-  <link rel="stylesheet" href="static/styles.css">
-</head>
-<body>
-  <header>
-    <h1>Infinity Word Search</h1>
-  </header>
-  <main class="app-shell">
-    <section class="gameplay" aria-labelledby="gameplay-title">
-      <div class="controls">
-        <div>
-          <p id="gameplay-title" style="margin: 0; font-size: 1rem; font-weight: 700;">Gameplay</p>
-          <p style="margin: 4px 0 0; color: #475569; font-size: 0.92rem;">Use the mouse wheel to zoom around the cursor. Click and drag to pan the grid.</p>
-        </div>
-
-        <div style="display: flex; gap: 24px; text-align: right;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Infinity Word Search</title>
+    <link rel="stylesheet" href="static/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Infinity Word Search</h1>
+    </header>
+    <main class="app-shell">
+      <section class="gameplay" aria-labelledby="gameplay-title">
+        <div class="controls">
           <div>
-             <p style="margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Game Mode</p>
-             <select id="mode-selector" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e293b; background: white; cursor: pointer;">
+            <p
+              id="gameplay-title"
+              style="margin: 0; font-size: 1rem; font-weight: 700"
+            >
+              Gameplay
+            </p>
+            <p style="margin: 4px 0 0; color: #475569; font-size: 0.92rem">
+              Use the mouse wheel to zoom around the cursor. Click and drag to
+              pan the grid.
+            </p>
+          </div>
+
+          <div style="display: flex; gap: 24px; text-align: right">
+            <div>
+              <p
+                style="
+                  margin: 0;
+                  font-size: 0.8rem;
+                  color: #64748b;
+                  text-transform: uppercase;
+                  font-weight: bold;
+                "
+              >
+                Game Mode
+              </p>
+              <select
+                id="mode-selector"
+                style="
+                  padding: 4px 8px;
+                  border-radius: 6px;
+                  border: 1px solid #cbd5e1;
+                  font-weight: bold;
+                  color: #1e293b;
+                  background: white;
+                  cursor: pointer;
+                "
+              >
                 <option value="CLASSIC">Classic</option>
                 <option value="OVERLAP">Overlap (Reuse)</option>
                 <option value="BLITZ">Timed</option>
                 <option value="PRECISION">Letter Count</option>
-             </select>
+              </select>
+            </div>
+            <div id="timer-container" style="display: none">
+              <p
+                style="
+                  margin: 0;
+                  font-size: 0.8rem;
+                  color: #64748b;
+                  text-transform: uppercase;
+                  font-weight: bold;
+                "
+              >
+                Time
+              </p>
+              <p
+                id="timer-display"
+                style="
+                  margin: 0;
+                  font-size: 1.8rem;
+                  font-weight: 800;
+                  color: #ef4444;
+                  line-height: 1;
+                "
+              >
+                1:00
+              </p>
+            </div>
+
+            <div id="letters-container" style="display: none">
+              <p
+                style="
+                  margin: 0;
+                  font-size: 0.8rem;
+                  color: #64748b;
+                  text-transform: uppercase;
+                  font-weight: bold;
+                "
+              >
+                Letters Left
+              </p>
+              <p
+                id="letters-display"
+                style="
+                  margin: 0;
+                  font-size: 1.8rem;
+                  font-weight: 800;
+                  color: #8b5cf6;
+                  line-height: 1;
+                "
+              >
+                50
+              </p>
+            </div>
           </div>
-            <div id="timer-container" style="display: none;">
-              <p style="margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Time</p>
-              <p id="timer-display" style="margin: 0; font-size: 1.8rem; font-weight: 800; color: #ef4444; line-height: 1;">1:00</p>
-            </div>
-
-            <div id="letters-container" style="display: none;">
-              <p style="margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Letters Left</p>
-              <p id="letters-display" style="margin: 0; font-size: 1.8rem; font-weight: 800; color: #8b5cf6; line-height: 1;">50</p>
-            </div>
-
-            <div style="text-align: right;">
-              <p style="margin: 0; font-size: 0.92rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Points</p>
-              <p id="score-display" style="margin: 0; font-size: 2rem; font-weight: 800; color: #ec4899;">0</p>
-            </div>
         </div>
+        <div class="grid-wrapper" id="grid-scroll-area">
+          <div class="grid-container" id="wordsearch-grid" data-scale="1">
+            <!-- Will fill with grid -->
+          </div>
+
+          <button
+            id="fullscreen-btn"
+            class="fullscreen-btn"
+            aria-label="Toggle Fullscreen"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              stroke="#1e293b"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+              ></path>
+            </svg>
+          </button>
+
+          <div
+            id="game-over-modal"
+            style="
+              display: none;
+              position: absolute;
+              inset: 0;
+              background: rgba(241, 245, 249, 0.95);
+              z-index: 100;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+            "
+          >
+            <h2
+              id="game-over-title"
+              style="
+                margin: 0 0 8px;
+                font-size: 3rem;
+                font-weight: 900;
+                color: #0f172a;
+              "
+            >
+              Time's Up!
+            </h2>
+            <p
+              id="game-over-score"
+              style="
+                margin: 0 0 24px;
+                font-size: 1.2rem;
+                color: #475569;
+                font-weight: bold;
+              "
+            >
+              Final Score: 0
+            </p>
+            <button
+              id="play-again-btn"
+              style="
+                padding: 12px 24px;
+                background: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 1.1rem;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+              "
+            >
+              Play Again
+            </button>
+          </div>
+        </div>
+      </section>
+      <div class="sidebar-container">
+        <aside class="word-bank" aria-labelledby="word-bank-title">
+          <h2 id="word-bank-title">Main Words</h2>
+
+          <ul class="word-list" id="main-word-list">
+            <!--Fill with words-->
+          </ul>
+        </aside>
+        <aside class="word-bank" aria-labelledby="word-bank-title">
+          <h2 id="word-bank-title">Word Bank</h2>
+          <p style="color: #475569; margin-top: 0; margin-bottom: 16px">
+            Find the words listed below in the grid.
+          </p>
+          <ul class="word-list" id="word-list">
+            <!--Fill with words-->
+          </ul>
+        </aside>
       </div>
-      <div class="grid-wrapper" id="grid-scroll-area">
-        <div class="grid-container" id="wordsearch-grid" data-scale="1">
-          <!-- Will fill with grid -->
+    </main>
+
+    <button id="help-btn" class="icon-btn" aria-label="How to play">?</button>
+
+    <dialog id="help-modal" class="help-modal">
+      <div class="modal-content">
+        <h2>How to Play</h2>
+
+        <div class="rules-grid">
+          <!-- RULE 1: Click and Drag -->
+          <div class="rule-card">
+            <div class="visual anim-drag">
+              <div class="drag-container">
+                <div class="box d1"></div>
+                <div class="box d2"></div>
+                <div class="box d3"></div>
+                <!-- The fake cursor -->
+                <div class="cursor">👆</div>
+                <!-- The pink line -->
+                <div class="drag-line"></div>
+              </div>
+            </div>
+            <p>
+              <strong>Click and drag</strong> across the grid to select words.
+            </p>
+          </div>
+
+          <!-- RULE 2: Expanding Board -->
+          <div class="rule-card">
+            <div class="visual anim-expand">
+              <div class="expand-container">
+                <div class="box found"></div>
+                <div class="box new n1"></div>
+                <div class="box new n2"></div>
+                <div class="box new n3"></div>
+              </div>
+            </div>
+            <p>Finding edge words <strong>expands</strong> the hidden board.</p>
+          </div>
+
+          <!-- RULE 3: Impossible Words -->
+          <div class="rule-card">
+            <div class="visual anim-impossible">
+              <div class="list-container">
+                <div class="fake-word w1">COMET</div>
+                <div class="fake-word w2">STAR</div>
+              </div>
+              <!-- The red X -->
+              <div class="strike-x">X</div>
+            </div>
+            <p>
+              Words disappear from your list when they become
+              <strong>impossible</strong>.
+            </p>
+          </div>
+
+          <!-- RULE 4: Scoring -->
+          <div class="rule-card">
+            <div class="visual">
+              <div class="trophy">🏆</div>
+            </div>
+            <p>
+              Points scale heavily based on <strong>length</strong> and crossing
+              <strong>sections</strong>.
+            </p>
+          </div>
         </div>
 
-
-        <button id="fullscreen-btn" class="fullscreen-btn" aria-label="Toggle Fullscreen">
-          <svg viewBox="0 0 24 24" width="24" height="24" stroke="#1e293b" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-          </svg>
-        </button>
-
-        
-        <div id="game-over-modal" style="display: none; position: absolute; inset: 0; background: rgba(241, 245, 249, 0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-            <h2 id="game-over-title" style="margin: 0 0 8px; font-size: 3rem; font-weight: 900; color: #0f172a;">Time's Up!</h2>
-            <p id="game-over-score" style="margin: 0 0 24px; font-size: 1.2rem; color: #475569; font-weight: bold;">Final Score: 0</p>
-            <button id="play-again-btn" style="padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Play Again</button>
-        </div>
+        <button id="close-help" class="primary-btn">Got it!</button>
       </div>
-    </section>
-    <div class="sidebar-container">
-      <aside class="word-bank" aria-labelledby="word-bank-title">
-        <h2 id="word-bank-title">Main Words</h2>
-        
-        <ul class="word-list" id="main-word-list">
-          <!--Fill with words-->
-        </ul>
-      </aside>
-      <aside class="word-bank" aria-labelledby="word-bank-title">
-        <h2 id="word-bank-title">Word Bank</h2>
-        <p style="color:#475569; margin-top:0; margin-bottom:16px;">Find the words listed below in the grid.</p>
-        <ul class="word-list" id="word-list">
-          <!--Fill with words-->
-        </ul>
-      </aside>
-    </div>
-    
-  </main>
-
-  <button id="help-btn" class="icon-btn" aria-label="How to play">?</button>
-
-  
-  <dialog id="help-modal" class="help-modal">
-    <div class="modal-content">
-      <h2>How to Play</h2>
-      
-      <div class="rules-grid">
-        
-        <!-- RULE 1: Click and Drag -->
-        <div class="rule-card">
-          <div class="visual anim-drag">
-            <div class="drag-container">
-              <div class="box d1"></div>
-              <div class="box d2"></div>
-              <div class="box d3"></div>
-              <!-- The fake cursor -->
-              <div class="cursor">👆</div>
-              <!-- The pink line -->
-              <div class="drag-line"></div>
-            </div>
-          </div>
-          <p><strong>Click and drag</strong> across the grid to select words.</p>
-        </div>
-
-        <!-- RULE 2: Expanding Board -->
-        <div class="rule-card">
-          <div class="visual anim-expand">
-            <div class="expand-container">
-               <div class="box found"></div>
-               <div class="box new n1"></div>
-               <div class="box new n2"></div>
-               <div class="box new n3"></div>
-            </div>
-          </div>
-          <p>Finding edge words <strong>expands</strong> the hidden board.</p>
-        </div>
-
-        <!-- RULE 3: Impossible Words -->
-        <div class="rule-card">
-          <div class="visual anim-impossible">
-            <div class="list-container">
-               <div class="fake-word w1">COMET</div>
-               <div class="fake-word w2">STAR</div>
-            </div>
-            <!-- The red X -->
-            <div class="strike-x">X</div>
-          </div>
-          <p>Words disappear from your list when they become <strong>impossible</strong>.</p>
-        </div>
-
-        <!-- RULE 4: Scoring -->
-        <div class="rule-card">
-          <div class="visual">
-            <div class="trophy">🏆</div>
-          </div>
-          <p>Points scale heavily based on <strong>length</strong> and crossing <strong>sections</strong>.</p>
-        </div>
-        
-      </div>
-
-      <button id="close-help" class="primary-btn">Got it!</button>
-    </div>
-  </dialog>
-  <script type="module" src="main.js"></script>
-  
-</body>
+    </dialog>
+    <script type="module" src="main.js"></script>
+  </body>
 </html>

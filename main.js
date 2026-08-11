@@ -55,7 +55,7 @@ let currentSelectionPath = [];
 
 
 /** @type {string[]} */
-let wordsRemaining = [...gridData.words];
+let wordsRemaining = [...gridData.words, ...gridData.mainWords];
 
 /** @type {Map<string, GridCell>} */
 export const gameState = new Map();
@@ -191,8 +191,8 @@ function triggerGameOver(customText = "Game Over!") {
         gameOverTitle.textContent = customText;
         gameOverTitle.style.color = "#ef4444"; // Red for lose
 
-        
-        gameOverScore.textContent = `Final Score: ${totalScore}`;
+        const maxScore = gridData.mainWords.length;
+        gameOverScore.textContent = `Final Score: ${maxScore}/${totalScore}`;
     }
 }
 
@@ -207,15 +207,18 @@ let impossibleWords = [];
 function calculateWordPaths() {
     wordPathsMap.clear();
     impossibleWords = [];
+    /**@type {string[]} */
+    let allwords = [...gridData.words, ...gridData.mainWords];
+    
     
     const dirs = [
         [0, -1], [1, -1], [1, 0], [1, 1],
         [0, 1], [-1, 1], [-1, 0], [-1, -1]
     ];
 
-    if (!gridData || !gridData.words) return;
+    if (!gridData || !allwords) return;
 
-    gridData.words.forEach(word => {
+    allwords.forEach(word => {
         let foundPath = null;
         
         // Scan the entire universe of cells (including hidden ones)
@@ -613,9 +616,10 @@ window.addEventListener('pointerup', (event) => {
             else if (wordsRemaining.includes(reversedWord)) matchedWord = reversedWord;
 
             if (matchedWord != null) {
-                const pointsEarned = calculateWordPoints(currentSelectionPath);
-                totalScore += pointsEarned;
-                
+                if (gridData.mainWords.includes(matchedWord)) {
+                    totalScore += 1;
+                }
+
                 if (currentMode.maxLetters !== null) {
                     lettersRemaining -= matchedWord.length;
                     if (lettersDisplay) {
@@ -625,13 +629,7 @@ window.addEventListener('pointerup', (event) => {
                     }
                 }
 
-                if (scoreDisplay) {
-                    scoreDisplay.textContent = totalScore.toString();
-                    
-                    
-                    scoreDisplay.style.transform = "scale(1.2)";
-                    setTimeout(() => scoreDisplay.style.transform = "scale(1)", 150);
-                }
+                
 
                 const startCoord = currentSelectionPath[0];
                 const endCoord = currentSelectionPath[currentSelectionPath.length - 1];
@@ -690,7 +688,11 @@ window.addEventListener('pointerup', (event) => {
                     updateWordListUI();
                 }
                 
-                if (wordsRemaining.length === 0) {
+                
+                const allWordsFound = gridData.mainWords.every(word => !wordsRemaining.includes(word));
+                console.log(allWordsFound);
+                //Meaning you found all main words
+                if (allWordsFound) {
                     if (impossibleWords.length > 0) {
                         triggerGameOver("Found all Words");
                     }
@@ -703,8 +705,6 @@ window.addEventListener('pointerup', (event) => {
                 } else if (currentMode.maxLetters !== null && lettersRemaining <= 0) {
                     triggerGameOver("Out of Letters!");
                 }
-
-                if (wordsRemaining.length === 0) console.log("You found all the words!");
             }
         }
         
@@ -736,19 +736,20 @@ window.addEventListener('pointercancel', (event) => {
  */
 function updateWordListUI() {
     const mainListContainer = document.getElementById('main-word-list');
+    console.log(mainListContainer);
     if (mainListContainer) {
         mainListContainer.innerHTML = '';
-
         
         gridData.mainWords.forEach(word => {
 
             const li = document.createElement('li');
             li.textContent = word;
-            // 1. If the word is impossible, skip it entirely (vanishes from list)
+            
+            //if impossible add tag main impossible
             if (impossibleWords.includes(word)) {
                 li.classList.add('main-impossible');
             } else if (!wordsRemaining.includes(word)) {
-                li.classList.add('crossed-off');
+                li.classList.add('main-found');
             }
             mainListContainer.appendChild(li);
         });
@@ -848,6 +849,7 @@ async function initializeGame() {
     await generateLevelData();
     calculateWordPaths();
     renderAllCells();
+    updateWordListUI();
 }
 
 initializeGame();

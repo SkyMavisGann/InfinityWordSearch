@@ -217,6 +217,10 @@
 }
 #main-word-list li.main-found {
   color: #10b981; 
+  background: #aefbd6;
+  border: #10b981;
+  border-width: 4px;
+  border-style: dashed;
   text-decoration: none;
 }
 #main-word-list li.main-impossible {
