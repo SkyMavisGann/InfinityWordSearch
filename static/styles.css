@@ -159,14 +159,40 @@
     .grid-cell:nth-child(12n+1) {
       border-left: none;
     }
+
     .grid-cell:hover {
       background: #e2e8f0;
     }
+    .grid-cell.contains-used-letter:hover {
+
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+
+    }
+    span.contains-used-letter {
+
+      text-decoration: underline;
+      background-color: #ffdff8;
+      text-decoration-thickness: 1px;
+
+    }
+
     .grid-cell.in-path:hover {
       background: #3b4d64;
     }
 .grid-cell.found, 
 .grid-cell.found * {
+  background-color: #d8d7d7;
+  color: rgba(255, 255, 255, 0.69);
+  border-color: #a8a8a8;
+  border-radius: 30%; /* Rounds out the boxes! */
+  transform: scale(0.7);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+  z-index: 2; /* Ensures the letters sit ABOVE the line */
+}
+
+.grid-cell.found.main, 
+.grid-cell.found.main * {
   background-color: #fdc5fe;
   color: white;
   border-color: #f692bf;
@@ -185,6 +211,15 @@
 }
 
 .word-line {
+  position: absolute;
+  background-color: #cdcccc; /* A lighter pink so the dark pink circles pop! */
+  height: 20px; /* Thick enough to see, thin enough to not block diagonals */
+  border-radius: 10px; /* Rounds the ends of the line */
+  z-index: 1; /* Sits behind the letters, but above the board */
+  pointer-events: none; /* So you can still click through it */
+}
+
+.word-line.main {
   position: absolute;
   background-color: #fbcfe8; /* A lighter pink so the dark pink circles pop! */
   height: 20px; /* Thick enough to see, thin enough to not block diagonals */
@@ -216,9 +251,9 @@
   font-weight: 600;
 }
 #main-word-list li.main-found {
-  color: #10b981; 
-  background: #aefbd6;
-  border: #10b981;
+  color: #ffb2fb; 
+  background: #fcd5f8;
+  border: #ffb2fb;
   border-width: 4px;
   border-style: dashed;
   text-decoration: none;

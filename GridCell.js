@@ -20,6 +20,9 @@ export class GridCell {
         this.isFound = false;
 
         /** @type {boolean} */
+        this.isMain = false;
+
+        /** @type {boolean} */
         this.isHidden = false;
 
         /** @type {number} */
@@ -47,12 +50,16 @@ export class GridCell {
         btn.style.opacity = String(this.opacity);
         if (this.isFound) {
             btn.classList.add('found');
+        
 
             // Base pink is 60% lightness. Drops 15% for each overlap, stopping at 15% (very dark)
-            const lightness = Math.max(15, 88 - ((this.foundCount - 1) * 15));
-            const saturation = Math.max(30, 96.61 - ((this.foundCount - 1) * 30));
-            btn.style.backgroundColor = `hsl(298.95, ${saturation}%, ${lightness}%)`;
-            btn.style.color = "white";
+            // const lightness = Math.max(15, 88 - ((this.foundCount - 1) * 15));
+            // const saturation = Math.max(30, 96.61 - ((this.foundCount - 1) * 30));
+            // btn.style.backgroundColor = `hsl(298.95, ${saturation}%, ${lightness}%)`;
+            // btn.style.color = "white";
+        }
+        if (this.isMain) {
+            btn.classList.add('main');
         }
 
         if (this.isHidden) {

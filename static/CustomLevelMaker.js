@@ -3,7 +3,7 @@ import { GridCell } from '../GridCell.js';
 import { gameState } from '../main.js';
 import { AppearingSections } from '../main.js';
 import { AppearingSection } from '../AppearingSection.js';
-import { wordList } from '../main.js';
+
 
 //@ts-check
 export const gridData = {
@@ -23,6 +23,10 @@ export const gridData = {
         'ICE',
         'FLAME',
         'CUT',
+        'EARS',
+        'EAR',
+        'DINO',
+        'RARE',
 
         'DIG',
         'SAD',

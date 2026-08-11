@@ -15,8 +15,7 @@ let currentMode = GameModes.CLASSIC;
 const gridWrapper = document.getElementById('grid-scroll-area');
 /** @type {HTMLElement | null} */
 const gridContainer = document.getElementById('wordsearch-grid');
-/** @type {HTMLElement | null} */
-export const wordList = document.getElementById('word-list');
+
 /** @type {HTMLElement | null} */
 export const mainWordList = document.getElementById('main-word-list');
 
@@ -25,7 +24,7 @@ export const mainWordList = document.getElementById('main-word-list');
 const scoreDisplay = document.getElementById('score-display');
 let totalScore = 0;
 
-if (!gridWrapper || !gridContainer || !wordList) {
+if (!gridWrapper || !gridContainer) {
     throw new Error('Required game elements were not found');
 }
 gridContainer.style.transformOrigin = '0 0';
@@ -56,6 +55,9 @@ let currentSelectionPath = [];
 
 /** @type {string[]} */
 let wordsRemaining = [...gridData.words, ...gridData.mainWords];
+
+/**@type {Map<string, number[]>} */
+let wordsContainingCurrentLetter = new Map();
 
 /** @type {Map<string, GridCell>} */
 export const gameState = new Map();
@@ -337,7 +339,7 @@ function calculateWordPoints(pathCoordinates) {
     // Exact formula: ((wordcount - 2) * span)
     const points = (pathCoordinates.length - 2) * span;
 
-    console.log(`Word Length: ${pathCoordinates.length} | Span: ${span} sections | Points: ${points}`);
+    
     
     // Return the points (using Math.max just to ensure 1-letter glitches don't award negative points)
     return Math.max(0, points);
@@ -410,6 +412,40 @@ function renderAllCells() {
     });
 }
 
+/**
+ * 
+ * @param {string} letters 
+ * @returns {Map<string, number[]>} all the words and which letter they are in
+ */
+function getAllMainWordsContaining(letters) {
+
+    /**@type {string[]} */
+    const mainWords = gridData.mainWords;
+    const mainWordsRemaining = mainWords.filter(item => wordsRemaining.includes(item));
+
+    /**@type {Map<string, number[]>} */
+    let map = new Map();
+
+    //for all the main words
+    mainWordsRemaining.forEach(element => {
+        //for each of its letters
+        for(let i = 0; i < element.length; i++) {
+            //and for all the letters you are checking
+            for(let j = 0; j < letters.length; j++) {
+                //if the letter you are currently checking matches any of the letters given
+                if (element[i] == letters[j]) {
+                    //then let everyone know to highlight that letter in that word
+                    const existing = map.get(element) ?? [];
+                    if (!existing.includes(i)) {
+                        map.set(element, [...existing, i]);
+                    }
+                }
+            }
+        }
+    });
+    return map;
+}
+
 // --- Event Listeners ---
 // --- Help Modal Logic ---
 const helpBtn = document.getElementById('help-btn');
@@ -464,6 +500,33 @@ gridWrapper.addEventListener('wheel', (event) => {
     updateCameraTransform();
 }, { passive: false });
 
+gridWrapper.addEventListener('mouseover', (event) => {
+
+    /** @type {HTMLElement | null} */
+    const targetCell = /** @type {HTMLElement} */ (event.target).closest('.grid-cell');
+
+    if (targetCell && targetCell.dataset.x && targetCell.dataset.y) {
+        
+        const cellData = gameState.get(`${targetCell.dataset.x},${targetCell.dataset.y}`);
+
+        
+        if (cellData && cellData.domElement) {
+            
+            wordsContainingCurrentLetter = getAllMainWordsContaining(cellData.letter);
+
+            if (wordsContainingCurrentLetter.size > 0) {
+                cellData.domElement.classList.add('contains-used-letter');
+            } else {
+                cellData.domElement.classList.remove('contains-used-letter');
+            }
+        }
+        
+    } else {
+        wordsContainingCurrentLetter = new Map();
+    }
+});
+
+
 gridWrapper.addEventListener('pointerdown', (event) => {
     if (isGameOver) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -507,6 +570,7 @@ gridWrapper.addEventListener('pointermove', (event) => {
     if (activePointers.has(event.pointerId)) {
         activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     }
+    
 
     if (activePointers.size === 2) {
         // Grab the two fingers
@@ -563,7 +627,16 @@ gridWrapper.addEventListener('pointermove', (event) => {
 
             const currentX = parseInt(htmlElement.dataset.x, 10);
             const currentY = parseInt(htmlElement.dataset.y, 10);
+            /**@type {string[]} */
             const path = getCellsInLine(selectStartX, selectStartY, currentX, currentY);
+            //I need the word from the path i can convert from one string to a letter, i need to build
+            /**@type {string[]} */
+
+            //get all the letters from the path. convert each path to a letter then join the array
+            const selectedWordLetters = path
+                .map(key => gameState.get(key)?.letter)
+                .filter((letter) => typeof letter === 'string');
+            wordsContainingCurrentLetter = getAllMainWordsContaining(selectedWordLetters.join(''));
 
             if (path.length > 0 && JSON.stringify(path) !== JSON.stringify(currentSelectionPath)) {
                 clearPath();
@@ -577,6 +650,7 @@ gridWrapper.addEventListener('pointermove', (event) => {
             }
         }
     }
+    updateWordListUI();
 });
 
 window.addEventListener('pointerup', (event) => {
@@ -649,19 +723,26 @@ window.addEventListener('pointerup', (event) => {
                     cellData.isFound = true;
                     if (cellData.domElement) {
                         cellData.domElement.classList.remove('in-path');
+                        
                         cellData.domElement.classList.add('found');
+                        if (gridData.mainWords.includes(matchedWord)) {
+                            cellData.isMain = true;
+                            cellData.domElement.classList.add('main');
+                        } 
+
+
                     }
                     cellData.foundCount = (cellData.foundCount || 0) + 1;
 
-                    if (cellData.domElement) {
-                            cellData.domElement.classList.add('found'); // Ensure the base class is there
+                    // if (cellData.domElement) {
+                    //         cellData.domElement.classList.add('found'); // Ensure the base class is there
                             
-                            // Apply the heat-map color directly to the live inline style
-                            const lightness = Math.max(15, 88 - ((cellData.foundCount - 1) * 15));
-                            const saturation = Math.max(30, 96.61 - ((cellData.foundCount - 1) * 30));
-                            cellData.domElement.style.backgroundColor = `hsl(298.95, ${saturation}%, ${lightness}%)`;
-                            cellData.domElement.style.color = "white";
-                        }
+                    //         // Apply the heat-map color directly to the live inline style
+                    //         const lightness = Math.max(15, 88 - ((cellData.foundCount - 1) * 15));
+                    //         const saturation = Math.max(30, 96.61 - ((cellData.foundCount - 1) * 30));
+                    //         cellData.domElement.style.backgroundColor = `hsl(298.95, ${saturation}%, ${lightness}%)`;
+                    //         cellData.domElement.style.color = "white";
+                    //     }
                     
 
 
@@ -690,7 +771,7 @@ window.addEventListener('pointerup', (event) => {
                 
                 
                 const allWordsFound = gridData.mainWords.every(word => !wordsRemaining.includes(word));
-                console.log(allWordsFound);
+
                 //Meaning you found all main words
                 if (allWordsFound) {
                     if (impossibleWords.length > 0) {
@@ -736,14 +817,35 @@ window.addEventListener('pointercancel', (event) => {
  */
 function updateWordListUI() {
     const mainListContainer = document.getElementById('main-word-list');
-    console.log(mainListContainer);
+    
     if (mainListContainer) {
         mainListContainer.innerHTML = '';
         
         gridData.mainWords.forEach(word => {
 
+            /**@type {string} */
+            let completeWord = word;
+            /**@type {number[] | undefined} */
+            const indexes = wordsContainingCurrentLetter.get(word);
+            if (indexes != undefined) {
+                for(let i = indexes.length; i >= 0; i--) {
+                    const index = indexes[i];
+                    if (index !== undefined && completeWord.length > index) {
+                        const firstPart = completeWord.slice(0, index);
+                        const middlePart = `<span class="contains-used-letter">${completeWord[index]}</span>`;
+                        const lastPart = completeWord.slice(index + 1);
+                        completeWord = firstPart + middlePart + lastPart;
+                        
+                    }
+                    
+                };
+            }
+            
+
+            
+
             const li = document.createElement('li');
-            li.textContent = word;
+            li.innerHTML = completeWord;
             
             //if impossible add tag main impossible
             if (impossibleWords.includes(word)) {
@@ -760,20 +862,20 @@ function updateWordListUI() {
         
         listContainer.innerHTML = '';
         
-        gridData.words.forEach(word => {
-            // 1. If the word is impossible, skip it entirely (vanishes from list)
-            if (impossibleWords.includes(word)) return;
+        // gridData.words.forEach(word => {
+        //     // 1. If the word is impossible, skip it entirely (vanishes from list)
+        //     if (impossibleWords.includes(word)) return;
             
-            const li = document.createElement('li');
-            li.textContent = word;
+        //     const li = document.createElement('li');
+        //     li.textContent = word;
             
-            // 2. If it's NOT in wordsRemaining (and not impossible), it must be found!
-            if (!wordsRemaining.includes(word)) {
-                li.classList.add('crossed-off');
-            }
+        //     // 2. If it's NOT in wordsRemaining (and not impossible), it must be found!
+        //     if (!wordsRemaining.includes(word)) {
+        //         li.classList.add('crossed-off');
+        //     }
             
-            listContainer.appendChild(li);
-        });
+        //     listContainer.appendChild(li);
+        // });
     }
 
 }
@@ -840,7 +942,6 @@ if (modeSelector) {
         const target = /** @type {HTMLSelectElement} */ (e.target);
         const selectedValue = target.value;
         currentMode = GameModes[selectedValue];
-        console.log(`Switched to: ${currentMode.name}`);
         resetGame();
     });
 }
