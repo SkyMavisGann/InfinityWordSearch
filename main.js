@@ -19,6 +19,10 @@ const gridContainer = document.getElementById('wordsearch-grid');
 /** @type {HTMLElement | null} */
 export const mainWordList = document.getElementById('main-word-list');
 
+const sidebar = document.getElementById('sidebar-container');
+const toggleButton = document.getElementById('list-toggle-btn');
+
+
 
 /** @type {HTMLElement | null} */
 const scoreDisplay = document.getElementById('score-display');
@@ -49,9 +53,6 @@ let prevPinchDistance = -1;
 
 /** @type {string[]} */
 let currentSelectionPath = [];
-
-
-
 
 /** @type {string[]} */
 let wordsRemaining = [...gridData.words, ...gridData.mainWords];
@@ -167,6 +168,16 @@ if (playAgainBtn) {
         resetGame();
     });
 }
+if (sidebar && toggleButton) {
+    toggleButton.addEventListener('pointerdown', (e) => e.stopPropagation());
+    toggleButton.addEventListener('mousedown', (e) => e.stopPropagation());
+    toggleButton.addEventListener('touchstart', (e) => e.stopPropagation());
+
+    toggleButton.addEventListener('click', () => {
+        sidebar.classList.toggle('hidden');
+    })
+}
+
 /**
  * Puts time into a readable format
  * @param {number} seconds 
@@ -303,46 +314,6 @@ function clearPath() {
             cellData.domElement.classList.remove('in-path');
         }
     });
-}
-
-/**
- * Calculates points based on word length and how many unique sections it spans
- * @param {string[]} pathCoordinates - Array of string keys (e.g., ["0,0", "1,0"])
- * @returns {number}
- */
-function calculateWordPoints(pathCoordinates) {
-    // A Set stores unique values. If we add "Section 1" five times, it only counts it once!
-    /**@type {Set<string>} */
-    const touchedSections = new Set();
-
-    pathCoordinates.forEach(key => {
-        const pos = keyToVector2(key);
-        let inAnyAppearingSection = false;
-
-        // Check if this specific letter falls inside any of our Appearing Sections
-        AppearingSections.forEach((section, index) => {
-            if (section.isWithinBounds(pos.x, pos.y, false)) {
-                touchedSections.add(`section_${index}`);
-                inAnyAppearingSection = true;
-            }
-        });
-
-        // If it wasn't in ANY appearing section bounds, it must be in the Base Grid
-        if (!inAnyAppearingSection) {
-            touchedSections.add('base_grid');
-        }
-    });
-
-    // The span is simply how many unique zones are in our Set
-    const span = touchedSections.size;
-    
-    // Exact formula: ((wordcount - 2) * span)
-    const points = (pathCoordinates.length - 2) * span;
-
-    
-    
-    // Return the points (using Math.max just to ensure 1-letter glitches don't award negative points)
-    return Math.max(0, points);
 }
 
 // --- Fog of War Logic ---

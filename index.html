@@ -136,6 +136,36 @@
             </svg>
           </button>
 
+          <button
+            id="list-toggle-btn"
+            class="list-toggle-btn"
+            aria-label="Toggle Word List"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="sidebar-container" id="sidebar-container">
+            <aside class="word-bank" aria-labelledby="word-bank-title">
+              <h2 id="word-bank-title">Main Words</h2>
+
+              <ul class="word-list" id="main-word-list">
+                <!--Fill with words-->
+              </ul>
+            </aside>
+          </div>
           <div
             id="game-over-modal"
             style="
@@ -191,15 +221,6 @@
           </div>
         </div>
       </section>
-      <div class="sidebar-container">
-        <aside class="word-bank" aria-labelledby="word-bank-title">
-          <h2 id="word-bank-title">Main Words</h2>
-
-          <ul class="word-list" id="main-word-list">
-            <!--Fill with words-->
-          </ul>
-        </aside>
-      </div>
     </main>
 
     <button id="help-btn" class="icon-btn" aria-label="How to play">?</button>

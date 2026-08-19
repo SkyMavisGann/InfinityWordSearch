@@ -33,7 +33,7 @@
     .app-shell {
       flex: 1;
       display: grid;
-      grid-template-columns: 1.8fr 1fr;
+      grid-template-columns: 1fr;
       gap: 20px;
       padding: 24px;
       align-items: start;
@@ -78,7 +78,7 @@
       align-items: center;
       justify-content: center;
       touch-action: none;
-
+      
       border: 1px solid #d1d5db;
       border-radius: 12px;
       background: #f1f5f9;
@@ -204,14 +204,50 @@
   cursor: not-allowed !important;
 }
 
-.sidebar-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 100%;
-  max-height: 100%;
+
+/* --- List Toggle Button --- */
+.list-toggle-btn {
+position: absolute;
+top: 16px;
+right: 16px;
+z-index: 60; /* Keeps it above the sidebar and the game cells */
+background: rgba(255, 255, 255, 0.9);
+border: 2px solid #cbd5e1;
+border-radius: 8px;
+padding: 8px;
+cursor: pointer;
+color: #1e293b;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: background 0.2s, transform 0.2s;
 }
 
+.list-toggle-btn:hover {
+background: #f8fafc;
+transform: scale(1.05);
+}
+
+/* --- Floating Sidebar Updates --- */
+.sidebar-container {
+position: absolute;
+top: 16px; 
+right: 16px;
+z-index: 50;
+max-height: calc(100% - 80px);
+overflow-y: auto;
+pointer-events: none;
+
+/* Smooth animation for opening and closing */
+transition: opacity 0.3s ease, transform 0.3s ease;
+transform-origin: top right;
+
+}
+
+#sidebar-container.hidden {
+  opacity: 0.0;
+  transform: scale(0.2);
+}
 .word-line {
   position: absolute;
   background-color: #cdcccc; /* A lighter pink so the dark pink circles pop! */
